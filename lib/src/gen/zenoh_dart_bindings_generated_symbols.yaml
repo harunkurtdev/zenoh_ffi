@@ -4,57 +4,57 @@ files:
     used-config:
       ffi-native: false
     symbols:
-      SubscriberCallbackFunction:
-        name: SubscriberCallbackFunction
-      c:@F@zenoh_cleanup:
-        name: zenoh_cleanup
+      ZenohGetCallbackFunction:
+        name: ZenohGetCallbackFunction
+      ZenohQueryCallbackFunction:
+        name: ZenohQueryCallbackFunction
+      ZenohSubscriberCallbackFunction:
+        name: ZenohSubscriberCallbackFunction
       c:@F@zenoh_close_session:
         name: zenoh_close_session
+      c:@F@zenoh_declare_publisher:
+        name: zenoh_declare_publisher
+      c:@F@zenoh_declare_queryable:
+        name: zenoh_declare_queryable
+      c:@F@zenoh_declare_subscriber:
+        name: zenoh_declare_subscriber
+      c:@F@zenoh_delete:
+        name: zenoh_delete
       c:@F@zenoh_free_string:
         name: zenoh_free_string
-      c:@F@zenoh_get:
-        name: zenoh_get
-      c:@F@zenoh_get_with_handler:
-        name: zenoh_get_with_handler
-      c:@F@zenoh_init:
-        name: zenoh_init
+      c:@F@zenoh_get_async:
+        name: zenoh_get_async
+      c:@F@zenoh_init_logger:
+        name: zenoh_init_logger
       c:@F@zenoh_open_session:
         name: zenoh_open_session
-      c:@F@zenoh_publish:
-        name: zenoh_publish
+      c:@F@zenoh_publisher_delete:
+        name: zenoh_publisher_delete
+      c:@F@zenoh_publisher_put:
+        name: zenoh_publisher_put
       c:@F@zenoh_put:
         name: zenoh_put
-      c:@F@zenoh_subscribe:
-        name: zenoh_subscribe
-      c:@F@zenoh_unsubscribe:
-        name: zenoh_unsubscribe
-      c:@F@zenoh_unsubscribe_all:
-        name: zenoh_unsubscribe_all
-      c:@S@z_owned_publisher_t:
-        name: z_owned_publisher_t
-      c:@S@z_owned_session_t:
-        name: z_owned_session_t
-      c:@S@z_owned_subscriber_t:
-        name: z_owned_subscriber_t
-      c:@SA@subscriber_t:
-        name: subscriber_t
-      c:zenoh_dart.h@T@SubscriberCallback:
-        name: SubscriberCallback
-      c:zenoh_dart.h@current_publisher_key:
-        name: current_publisher_key
-      c:zenoh_dart.h@g_next_subscriber_id:
-        name: g_next_subscriber_id
-      c:zenoh_dart.h@g_subscribers:
-        name: g_subscribers
-      c:zenoh_dart.h@global_publisher:
-        name: global_publisher
-      c:zenoh_dart.h@last_received_value:
-        name: last_received_value
-      c:zenoh_dart.h@publisher_declared:
-        name: publisher_declared
-      c:zenoh_dart.h@reply_received:
-        name: reply_received
-      c:zenoh_dart.h@session:
-        name: session
-      c:zenoh_dart.h@session_opened:
-        name: session_opened
+      c:@F@zenoh_query_reply:
+        name: zenoh_query_reply
+      c:@F@zenoh_scout:
+        name: zenoh_scout
+      c:@F@zenoh_undeclare_publisher:
+        name: zenoh_undeclare_publisher
+      c:@F@zenoh_undeclare_queryable:
+        name: zenoh_undeclare_queryable
+      c:@F@zenoh_undeclare_subscriber:
+        name: zenoh_undeclare_subscriber
+      c:@S@ZenohPublisher:
+        name: ZenohPublisher
+      c:@S@ZenohQueryable:
+        name: ZenohQueryable
+      c:@S@ZenohSession:
+        name: ZenohSession
+      c:@S@ZenohSubscriber:
+        name: ZenohSubscriber
+      c:zenoh_dart.h@T@ZenohGetCallback:
+        name: ZenohGetCallback
+      c:zenoh_dart.h@T@ZenohQueryCallback:
+        name: ZenohQueryCallback
+      c:zenoh_dart.h@T@ZenohSubscriberCallback:
+        name: ZenohSubscriberCallback

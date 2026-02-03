@@ -27,91 +27,18 @@ class ZenohDartBindings {
           lookup)
       : _lookup = lookup;
 
-  /// Global zenoh session variable
-  late final ffi.Pointer<z_owned_session_t> _session =
-      _lookup<z_owned_session_t>('session');
-
-  z_owned_session_t get session => _session.ref;
-
-  late final ffi.Pointer<ffi.Bool> _session_opened =
-      _lookup<ffi.Bool>('session_opened');
-
-  bool get session_opened => _session_opened.value;
-
-  set session_opened(bool value) => _session_opened.value = value;
-
-  /// Global variables for zenoh_get reply handling
-  late final ffi.Pointer<ffi.Bool> _reply_received =
-      _lookup<ffi.Bool>('reply_received');
-
-  bool get reply_received => _reply_received.value;
-
-  set reply_received(bool value) => _reply_received.value = value;
-
-  late final ffi.Pointer<ffi.Pointer<ffi.Char>> _last_received_value =
-      _lookup<ffi.Pointer<ffi.Char>>('last_received_value');
-
-  ffi.Pointer<ffi.Char> get last_received_value => _last_received_value.value;
-
-  set last_received_value(ffi.Pointer<ffi.Char> value) =>
-      _last_received_value.value = value;
-
-  /// Global variables for zenoh_put publisher handling
-  late final ffi.Pointer<z_owned_publisher_t> _global_publisher =
-      _lookup<z_owned_publisher_t>('global_publisher');
-
-  z_owned_publisher_t get global_publisher => _global_publisher.ref;
-
-  late final ffi.Pointer<ffi.Bool> _publisher_declared =
-      _lookup<ffi.Bool>('publisher_declared');
-
-  bool get publisher_declared => _publisher_declared.value;
-
-  set publisher_declared(bool value) => _publisher_declared.value = value;
-
-  late final ffi.Pointer<ffi.Pointer<ffi.Char>> _current_publisher_key =
-      _lookup<ffi.Pointer<ffi.Char>>('current_publisher_key');
-
-  ffi.Pointer<ffi.Char> get current_publisher_key =>
-      _current_publisher_key.value;
-
-  set current_publisher_key(ffi.Pointer<ffi.Char> value) =>
-      _current_publisher_key.value = value;
-
-  /// Multiple subscribers support
-  late final ffi.Pointer<ffi.Pointer<subscriber_t>> _g_subscribers =
-      _lookup<ffi.Pointer<subscriber_t>>('g_subscribers');
-
-  ffi.Pointer<subscriber_t> get g_subscribers => _g_subscribers.value;
-
-  set g_subscribers(ffi.Pointer<subscriber_t> value) =>
-      _g_subscribers.value = value;
-
-  late final ffi.Pointer<ffi.Int> _g_next_subscriber_id =
-      _lookup<ffi.Int>('g_next_subscriber_id');
-
-  int get g_next_subscriber_id => _g_next_subscriber_id.value;
-
-  set g_next_subscriber_id(int value) => _g_next_subscriber_id.value = value;
-
-  /// Function declarations
-  int zenoh_init() {
-    return _zenoh_init();
+  /// Library Management
+  int zenoh_init_logger() {
+    return _zenoh_init_logger();
   }
 
-  late final _zenoh_initPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function()>>('zenoh_init');
-  late final _zenoh_init = _zenoh_initPtr.asFunction<int Function()>();
+  late final _zenoh_init_loggerPtr =
+      _lookup<ffi.NativeFunction<ffi.Int Function()>>('zenoh_init_logger');
+  late final _zenoh_init_logger =
+      _zenoh_init_loggerPtr.asFunction<int Function()>();
 
-  void zenoh_cleanup() {
-    return _zenoh_cleanup();
-  }
-
-  late final _zenoh_cleanupPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('zenoh_cleanup');
-  late final _zenoh_cleanup = _zenoh_cleanupPtr.asFunction<void Function()>();
-
-  int zenoh_open_session(
+  /// Session Management
+  ffi.Pointer<ZenohSession> zenoh_open_session(
     ffi.Pointer<ffi.Char> mode,
     ffi.Pointer<ffi.Char> endpoint,
   ) {
@@ -123,83 +50,294 @@ class ZenohDartBindings {
 
   late final _zenoh_open_sessionPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ZenohSession> Function(ffi.Pointer<ffi.Char>,
               ffi.Pointer<ffi.Char>)>>('zenoh_open_session');
-  late final _zenoh_open_session = _zenoh_open_sessionPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+  late final _zenoh_open_session = _zenoh_open_sessionPtr.asFunction<
+      ffi.Pointer<ZenohSession> Function(
+          ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
 
-  void zenoh_close_session() {
-    return _zenoh_close_session();
+  void zenoh_close_session(
+    ffi.Pointer<ZenohSession> session,
+  ) {
+    return _zenoh_close_session(
+      session,
+    );
   }
 
   late final _zenoh_close_sessionPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('zenoh_close_session');
-  late final _zenoh_close_session =
-      _zenoh_close_sessionPtr.asFunction<void Function()>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ZenohSession>)>>(
+          'zenoh_close_session');
+  late final _zenoh_close_session = _zenoh_close_sessionPtr
+      .asFunction<void Function(ffi.Pointer<ZenohSession>)>();
 
-  int zenoh_put(
+  /// Publisher
+  ffi.Pointer<ZenohPublisher> zenoh_declare_publisher(
+    ffi.Pointer<ZenohSession> session,
     ffi.Pointer<ffi.Char> key,
-    ffi.Pointer<ffi.Char> value,
+  ) {
+    return _zenoh_declare_publisher(
+      session,
+      key,
+    );
+  }
+
+  late final _zenoh_declare_publisherPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ZenohPublisher> Function(ffi.Pointer<ZenohSession>,
+              ffi.Pointer<ffi.Char>)>>('zenoh_declare_publisher');
+  late final _zenoh_declare_publisher = _zenoh_declare_publisherPtr.asFunction<
+      ffi.Pointer<ZenohPublisher> Function(
+          ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>)>();
+
+  int zenoh_publisher_put(
+    ffi.Pointer<ZenohPublisher> publisher,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+  ) {
+    return _zenoh_publisher_put(
+      publisher,
+      data,
+      len,
+    );
+  }
+
+  late final _zenoh_publisher_putPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<ZenohPublisher>, ffi.Pointer<ffi.Uint8>,
+              ffi.Size)>>('zenoh_publisher_put');
+  late final _zenoh_publisher_put = _zenoh_publisher_putPtr.asFunction<
+      int Function(ffi.Pointer<ZenohPublisher>, ffi.Pointer<ffi.Uint8>, int)>();
+
+  int zenoh_publisher_delete(
+    ffi.Pointer<ZenohPublisher> publisher,
+  ) {
+    return _zenoh_publisher_delete(
+      publisher,
+    );
+  }
+
+  late final _zenoh_publisher_deletePtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ZenohPublisher>)>>(
+      'zenoh_publisher_delete');
+  late final _zenoh_publisher_delete = _zenoh_publisher_deletePtr
+      .asFunction<int Function(ffi.Pointer<ZenohPublisher>)>();
+
+  void zenoh_undeclare_publisher(
+    ffi.Pointer<ZenohPublisher> publisher,
+  ) {
+    return _zenoh_undeclare_publisher(
+      publisher,
+    );
+  }
+
+  late final _zenoh_undeclare_publisherPtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ZenohPublisher>)>>(
+      'zenoh_undeclare_publisher');
+  late final _zenoh_undeclare_publisher = _zenoh_undeclare_publisherPtr
+      .asFunction<void Function(ffi.Pointer<ZenohPublisher>)>();
+
+  /// Subscriber
+  ffi.Pointer<ZenohSubscriber> zenoh_declare_subscriber(
+    ffi.Pointer<ZenohSession> session,
+    ffi.Pointer<ffi.Char> key,
+    ZenohSubscriberCallback callback,
+    ffi.Pointer<ffi.Void> context,
+  ) {
+    return _zenoh_declare_subscriber(
+      session,
+      key,
+      callback,
+      context,
+    );
+  }
+
+  late final _zenoh_declare_subscriberPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ZenohSubscriber> Function(
+              ffi.Pointer<ZenohSession>,
+              ffi.Pointer<ffi.Char>,
+              ZenohSubscriberCallback,
+              ffi.Pointer<ffi.Void>)>>('zenoh_declare_subscriber');
+  late final _zenoh_declare_subscriber =
+      _zenoh_declare_subscriberPtr.asFunction<
+          ffi.Pointer<ZenohSubscriber> Function(
+              ffi.Pointer<ZenohSession>,
+              ffi.Pointer<ffi.Char>,
+              ZenohSubscriberCallback,
+              ffi.Pointer<ffi.Void>)>();
+
+  void zenoh_undeclare_subscriber(
+    ffi.Pointer<ZenohSubscriber> subscriber,
+  ) {
+    return _zenoh_undeclare_subscriber(
+      subscriber,
+    );
+  }
+
+  late final _zenoh_undeclare_subscriberPtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ZenohSubscriber>)>>(
+      'zenoh_undeclare_subscriber');
+  late final _zenoh_undeclare_subscriber = _zenoh_undeclare_subscriberPtr
+      .asFunction<void Function(ffi.Pointer<ZenohSubscriber>)>();
+
+  /// Queryable
+  ffi.Pointer<ZenohQueryable> zenoh_declare_queryable(
+    ffi.Pointer<ZenohSession> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    ZenohQueryCallback callback,
+    ffi.Pointer<ffi.Void> context,
+  ) {
+    return _zenoh_declare_queryable(
+      session,
+      key_expr,
+      callback,
+      context,
+    );
+  }
+
+  late final _zenoh_declare_queryablePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ZenohQueryable> Function(
+              ffi.Pointer<ZenohSession>,
+              ffi.Pointer<ffi.Char>,
+              ZenohQueryCallback,
+              ffi.Pointer<ffi.Void>)>>('zenoh_declare_queryable');
+  late final _zenoh_declare_queryable = _zenoh_declare_queryablePtr.asFunction<
+      ffi.Pointer<ZenohQueryable> Function(ffi.Pointer<ZenohSession>,
+          ffi.Pointer<ffi.Char>, ZenohQueryCallback, ffi.Pointer<ffi.Void>)>();
+
+  void zenoh_undeclare_queryable(
+    ffi.Pointer<ZenohQueryable> queryable,
+  ) {
+    return _zenoh_undeclare_queryable(
+      queryable,
+    );
+  }
+
+  late final _zenoh_undeclare_queryablePtr = _lookup<
+          ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ZenohQueryable>)>>(
+      'zenoh_undeclare_queryable');
+  late final _zenoh_undeclare_queryable = _zenoh_undeclare_queryablePtr
+      .asFunction<void Function(ffi.Pointer<ZenohQueryable>)>();
+
+  void zenoh_query_reply(
+    ffi.Pointer<ffi.Void> reply_context,
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+  ) {
+    return _zenoh_query_reply(
+      reply_context,
+      key,
+      data,
+      len,
+    );
+  }
+
+  late final _zenoh_query_replyPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Uint8>, ffi.Size)>>('zenoh_query_reply');
+  late final _zenoh_query_reply = _zenoh_query_replyPtr.asFunction<
+      void Function(ffi.Pointer<ffi.Void>, ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Uint8>, int)>();
+
+  /// Ad-hoc Operations
+  int zenoh_put(
+    ffi.Pointer<ZenohSession> session,
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
   ) {
     return _zenoh_put(
+      session,
       key,
-      value,
+      data,
+      len,
     );
   }
 
   late final _zenoh_putPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('zenoh_put');
-  late final _zenoh_put = _zenoh_putPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
+          ffi.Int Function(ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Uint8>, ffi.Size)>>('zenoh_put');
+  late final _zenoh_put = _zenoh_putPtr.asFunction<
+      int Function(ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Uint8>, int)>();
 
-  int zenoh_publish(
-    ffi.Pointer<ffi.Char> key,
-    ffi.Pointer<ffi.Char> value,
-  ) {
-    return _zenoh_publish(
-      key,
-      value,
-    );
-  }
-
-  late final _zenoh_publishPtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>>('zenoh_publish');
-  late final _zenoh_publish = _zenoh_publishPtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Char>)>();
-
-  ffi.Pointer<ffi.Char> zenoh_get(
+  int zenoh_delete(
+    ffi.Pointer<ZenohSession> session,
     ffi.Pointer<ffi.Char> key,
   ) {
-    return _zenoh_get(
+    return _zenoh_delete(
+      session,
       key,
     );
   }
 
-  late final _zenoh_getPtr = _lookup<
+  late final _zenoh_deletePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>>('zenoh_get');
-  late final _zenoh_get = _zenoh_getPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+          ffi.Int Function(ffi.Pointer<ZenohSession>,
+              ffi.Pointer<ffi.Char>)>>('zenoh_delete');
+  late final _zenoh_delete = _zenoh_deletePtr.asFunction<
+      int Function(ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>)>();
 
-  ffi.Pointer<ffi.Char> zenoh_get_with_handler(
-    ffi.Pointer<ffi.Char> key,
+  /// Query (Get)
+  void zenoh_get_async(
+    ffi.Pointer<ZenohSession> session,
+    ffi.Pointer<ffi.Char> selector,
+    ZenohGetCallback callback,
+    ffi.Pointer<ffi.Void> context,
   ) {
-    return _zenoh_get_with_handler(
-      key,
+    return _zenoh_get_async(
+      session,
+      selector,
+      callback,
+      context,
     );
   }
 
-  late final _zenoh_get_with_handlerPtr = _lookup<
+  late final _zenoh_get_asyncPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Pointer<ffi.Char> Function(
-              ffi.Pointer<ffi.Char>)>>('zenoh_get_with_handler');
-  late final _zenoh_get_with_handler = _zenoh_get_with_handlerPtr
-      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<ffi.Char>)>();
+          ffi.Void Function(ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>,
+              ZenohGetCallback, ffi.Pointer<ffi.Void>)>>('zenoh_get_async');
+  late final _zenoh_get_async = _zenoh_get_asyncPtr.asFunction<
+      void Function(ffi.Pointer<ZenohSession>, ffi.Pointer<ffi.Char>,
+          ZenohGetCallback, ffi.Pointer<ffi.Void>)>();
 
+  /// Scouting
+  void zenoh_scout(
+    ffi.Pointer<ffi.Char> what,
+    ffi.Pointer<ffi.Char> config,
+    ffi.Pointer<
+            ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Char> info)>>
+        callback,
+  ) {
+    return _zenoh_scout(
+      what,
+      config,
+      callback,
+    );
+  }
+
+  late final _zenoh_scoutPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<
+                  ffi.NativeFunction<
+                      ffi.Void Function(
+                          ffi.Pointer<ffi.Char> info)>>)>>('zenoh_scout');
+  late final _zenoh_scout = _zenoh_scoutPtr.asFunction<
+      void Function(
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>,
+          ffi.Pointer<
+              ffi.NativeFunction<
+                  ffi.Void Function(ffi.Pointer<ffi.Char> info)>>)>();
+
+  /// Helpers
   void zenoh_free_string(
     ffi.Pointer<ffi.Char> str,
   ) {
@@ -213,133 +351,62 @@ class ZenohDartBindings {
           'zenoh_free_string');
   late final _zenoh_free_string =
       _zenoh_free_stringPtr.asFunction<void Function(ffi.Pointer<ffi.Char>)>();
-
-  int zenoh_subscribe(
-    ffi.Pointer<ffi.Char> key_expr,
-    SubscriberCallback callback,
-  ) {
-    return _zenoh_subscribe(
-      key_expr,
-      callback,
-    );
-  }
-
-  late final _zenoh_subscribePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Int Function(
-              ffi.Pointer<ffi.Char>, SubscriberCallback)>>('zenoh_subscribe');
-  late final _zenoh_subscribe = _zenoh_subscribePtr
-      .asFunction<int Function(ffi.Pointer<ffi.Char>, SubscriberCallback)>();
-
-  void zenoh_unsubscribe(
-    int subscriber_id,
-  ) {
-    return _zenoh_unsubscribe(
-      subscriber_id,
-    );
-  }
-
-  late final _zenoh_unsubscribePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>(
-          'zenoh_unsubscribe');
-  late final _zenoh_unsubscribe =
-      _zenoh_unsubscribePtr.asFunction<void Function(int)>();
-
-  void zenoh_unsubscribe_all() {
-    return _zenoh_unsubscribe_all();
-  }
-
-  late final _zenoh_unsubscribe_allPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('zenoh_unsubscribe_all');
-  late final _zenoh_unsubscribe_all =
-      _zenoh_unsubscribe_allPtr.asFunction<void Function()>();
 }
 
-/// Subscriber structure
-final class subscriber_t extends ffi.Struct {
-  external z_owned_subscriber_t subscriber;
+final class ZenohSession extends ffi.Opaque {}
 
-  external SubscriberCallback callback;
+final class ZenohPublisher extends ffi.Opaque {}
 
-  @ffi.Bool()
-  external bool active;
+final class ZenohSubscriber extends ffi.Opaque {}
 
-  @ffi.Int()
-  external int id;
+final class ZenohQueryable extends ffi.Opaque {}
 
-  @ffi.Array.multi([256])
-  external ffi.Array<ffi.Char> key_expr;
-}
-
-/// An owned Zenoh <a href="https://zenoh.io/docs/manual/abstractions/#subscriber"> subscriber </a>.
-///
-/// Receives data from publication on intersecting key expressions.
-/// Destroying the subscriber cancels the subscription.
-final class z_owned_subscriber_t extends ffi.Struct {
-  @ffi.Array.multi([48])
-  external ffi.Array<ffi.Uint8> _0;
-}
-
-/// Callback function pointer type for Flutter
-typedef SubscriberCallback
-    = ffi.Pointer<ffi.NativeFunction<SubscriberCallbackFunction>>;
-typedef SubscriberCallbackFunction = ffi.Void Function(
+/// Callback Types
+typedef ZenohSubscriberCallback
+    = ffi.Pointer<ffi.NativeFunction<ZenohSubscriberCallbackFunction>>;
+typedef ZenohSubscriberCallbackFunction = ffi.Void Function(
     ffi.Pointer<ffi.Char> key,
-    ffi.Pointer<ffi.Char> value,
+    ffi.Pointer<ffi.Uint8> value,
+    ffi.Size len,
     ffi.Pointer<ffi.Char> kind,
     ffi.Pointer<ffi.Char> attachment,
-    ffi.Int subscriber_id);
-typedef DartSubscriberCallbackFunction = void Function(
+    ffi.Pointer<ffi.Void> context);
+typedef DartZenohSubscriberCallbackFunction = void Function(
     ffi.Pointer<ffi.Char> key,
-    ffi.Pointer<ffi.Char> value,
+    ffi.Pointer<ffi.Uint8> value,
+    int len,
     ffi.Pointer<ffi.Char> kind,
     ffi.Pointer<ffi.Char> attachment,
-    int subscriber_id);
-
-/// An owned Zenoh session.
-final class z_owned_session_t extends ffi.Struct {
-  @ffi.Array.multi([8])
-  external ffi.Array<ffi.Uint8> _0;
-}
-
-/// An owned Zenoh <a href="https://zenoh.io/docs/manual/abstractions/#publisher"> publisher </a>.
-final class z_owned_publisher_t extends ffi.Struct {
-  @ffi.Array.multi([104])
-  external ffi.Array<ffi.Uint8> _0;
-}
-
-const int Z_CONGESTION_CONTROL_DEFAULT = 1;
-
-const int Z_CONSOLIDATION_MODE_DEFAULT = -1;
-
-const int Z_PRIORITY_DEFAULT = 5;
-
-const int Z_QUERY_TARGET_DEFAULT = 0;
-
-const int Z_SAMPLE_KIND_DEFAULT = 0;
-
-const String Z_CONFIG_MODE_KEY = 'mode';
-
-const String Z_CONFIG_CONNECT_KEY = 'connect/endpoints';
-
-const String Z_CONFIG_LISTEN_KEY = 'listen/endpoints';
-
-const String Z_CONFIG_USER_KEY = 'transport/auth/usrpwd/user';
-
-const String Z_CONFIG_PASSWORD_KEY = 'transport/auth/usrpwd/password';
-
-const String Z_CONFIG_MULTICAST_SCOUTING_KEY = 'scouting/multicast/enabled';
-
-const String Z_CONFIG_MULTICAST_INTERFACE_KEY = 'scouting/multicast/interface';
-
-const String Z_CONFIG_MULTICAST_IPV4_ADDRESS_KEY = 'scouting/multicast/address';
-
-const String Z_CONFIG_SCOUTING_DELAY_KEY = 'scouting/delay';
-
-const String Z_CONFIG_SCOUTING_TIMEOUT_KEY = 'scouting/timeout';
-
-const String Z_CONFIG_ADD_TIMESTAMP_KEY = 'timestamping/enabled';
-
-const String Z_CONFIG_SHARED_MEMORY_KEY = 'transport/shared_memory/enabled';
-
-const int MAX_SUBSCRIBERS = 32;
+    ffi.Pointer<ffi.Void> context);
+typedef ZenohQueryCallback
+    = ffi.Pointer<ffi.NativeFunction<ZenohQueryCallbackFunction>>;
+typedef ZenohQueryCallbackFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Char> selector,
+    ffi.Pointer<ffi.Uint8> value,
+    ffi.Size len,
+    ffi.Pointer<ffi.Char> kind,
+    ffi.Pointer<ffi.Void> reply_context,
+    ffi.Pointer<ffi.Void> user_context);
+typedef DartZenohQueryCallbackFunction = void Function(
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Char> selector,
+    ffi.Pointer<ffi.Uint8> value,
+    int len,
+    ffi.Pointer<ffi.Char> kind,
+    ffi.Pointer<ffi.Void> reply_context,
+    ffi.Pointer<ffi.Void> user_context);
+typedef ZenohGetCallback
+    = ffi.Pointer<ffi.NativeFunction<ZenohGetCallbackFunction>>;
+typedef ZenohGetCallbackFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Uint8> value,
+    ffi.Size len,
+    ffi.Pointer<ffi.Char> kind,
+    ffi.Pointer<ffi.Void> context);
+typedef DartZenohGetCallbackFunction = void Function(
+    ffi.Pointer<ffi.Char> key,
+    ffi.Pointer<ffi.Uint8> value,
+    int len,
+    ffi.Pointer<ffi.Char> kind,
+    ffi.Pointer<ffi.Void> context);

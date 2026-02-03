@@ -3,7 +3,7 @@
 // ============================================
 
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart' show ZenohDart;
+import 'package:zenoh_dart/zenoh_dart.dart';
 
 class MultipleSubscribersPage extends StatefulWidget {
   const MultipleSubscribersPage({super.key});
@@ -14,7 +14,8 @@ class MultipleSubscribersPage extends StatefulWidget {
 }
 
 class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
-  final Map<String, int?> _subscriberIds = {};
+  ZenohSession? _session;
+  final Map<String, ZenohSubscriber> _subscribers = {};
   final Map<String, String> _latestValues = {};
   final Map<String, bool> _isLoading = {};
   final Map<String, String?> _errors = {};
@@ -24,7 +25,7 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
     'mqtt/demo/sensor/temperature',
     'sensor/humidity',
     'sensor/pressure',
-    'mqtt/demo/sensor/temperature',
+    'mqtt/demo/sensor/temperature', // Duplicate topic intent
     'mqtt/demo/sensor/**',
   ];
 
@@ -45,33 +46,35 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
     if (_isDisposed) return;
 
     try {
-      // Initialize Zenoh session, isolate, etc.
-      // ip address for zenoh routers
-      await ZenohDart.initialize(mode: 'client', endpoints: [
+      // Initialize Zenoh session
+      _session = await ZenohSession.open(mode: 'client', endpoints: [
         'tcp/localhost:7447',
         'tcp/10.51.45.140:7447',
         'tcp/127.0.0.1:7447',
         'tcp/10.0.0.2:7447', // android emulator localhost
       ]);
 
+      print('Session opened successfully');
+
       for (var topic in _topics) {
         if (_isDisposed) break;
 
         try {
-          final subscriberId = await ZenohDart.subscribe(
-            topic,
-            (key, value, kind, attachment, id) {
-              if (!_isDisposed && mounted) {
-                setState(() {
-                  _latestValues[key] = value;
-                });
-              }
-            },
-          );
+          // Declare subscriber
+          final subscriber = await _session!.declareSubscriber(topic);
+
+          // Listen to stream
+          subscriber.stream.listen((sample) {
+            if (!_isDisposed && mounted) {
+              setState(() {
+                _latestValues[topic] = sample.payloadString;
+              });
+            }
+          });
 
           if (!_isDisposed && mounted) {
             setState(() {
-              _subscriberIds[topic] = subscriberId;
+              _subscribers[topic] = subscriber;
               _isLoading[topic] = false;
               _errors[topic] = null;
             });
@@ -111,7 +114,7 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
           final topic = _topics[index];
           final isLoading = _isLoading[topic] ?? true;
           final error = _errors[topic];
-          final subscriberId = _subscriberIds[topic];
+          final isSubscribed = _subscribers.containsKey(topic);
 
           return Card(
             margin: const EdgeInsets.all(8),
@@ -133,12 +136,12 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
                         ? 'Error: $error'
                         : 'Value: ${_latestValues[topic] ?? "No data yet"}',
               ),
-              trailing: subscriberId != null && !isLoading
+              trailing: isSubscribed && !isLoading
                   ? IconButton(
                       icon: const Icon(Icons.send),
                       onPressed: () {
                         try {
-                          ZenohDart.publish(
+                          _session?.putString(
                             topic,
                             '${DateTime.now().millisecondsSinceEpoch}',
                           );
@@ -158,16 +161,15 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
   @override
   void dispose() {
     _isDisposed = true;
-    // Unsubscribe all individually
-    for (var id in _subscriberIds.values) {
-      if (id != null) {
-        try {
-          ZenohDart.unsubscribe(id);
-        } catch (e) {
-          print('Error unsubscribing $id: $e');
-        }
-      }
-    }
+    _disposeResources();
     super.dispose();
+  }
+
+  Future<void> _disposeResources() async {
+    // Unsubscribe all
+    for (var sub in _subscribers.values) {
+      await sub.undeclare();
+    }
+    await _session?.close();
   }
 }

@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart' show ZenohDart;
+import 'package:zenoh_dart/zenoh_dart.dart';
 
 class ZenohStreamPage extends StatefulWidget {
   const ZenohStreamPage({super.key});
@@ -17,7 +17,8 @@ class ZenohStreamPage extends StatefulWidget {
 class _ZenohStreamPageState extends State<ZenohStreamPage> {
   final StreamController<String> _messageController =
       StreamController<String>();
-  int? _subscriberId;
+  ZenohSession? _session;
+  ZenohSubscriber? _subscriber;
   bool _isDisposed = false;
 
   @override
@@ -33,7 +34,7 @@ class _ZenohStreamPageState extends State<ZenohStreamPage> {
     if (_isDisposed) return;
 
     try {
-      await ZenohDart.initialize(mode: 'client', endpoints: [
+      _session = await ZenohSession.open(mode: 'client', endpoints: [
         'tcp/localhost:7447',
         'tcp/10.51.45.140:7447',
         'tcp/127.0.0.1:7447',
@@ -42,14 +43,13 @@ class _ZenohStreamPageState extends State<ZenohStreamPage> {
 
       if (_isDisposed || !mounted) return;
 
-      _subscriberId = await ZenohDart.subscribe(
-        'demo/stream',
-        (key, value, kind, attachment, id) {
-          if (!_isDisposed && !_messageController.isClosed) {
-            _messageController.add('$key: $value');
-          }
-        },
-      );
+      _subscriber = await _session!.declareSubscriber('demo/stream');
+
+      _subscriber!.stream.listen((sample) {
+        if (!_isDisposed && !_messageController.isClosed) {
+          _messageController.add('${sample.key}: ${sample.payloadString}');
+        }
+      });
     } catch (e) {
       print('Error setting up subscriber: $e');
       if (!_messageController.isClosed) {
@@ -106,10 +106,10 @@ class _ZenohStreamPageState extends State<ZenohStreamPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: _subscriberId != null
+              onPressed: _subscriber != null
                   ? () {
                       try {
-                        ZenohDart.publish(
+                        _session?.putString(
                           'demo/stream',
                           'Message at ${DateTime.now().toIso8601String()}',
                         );
@@ -129,14 +129,13 @@ class _ZenohStreamPageState extends State<ZenohStreamPage> {
   @override
   void dispose() {
     _isDisposed = true;
-    if (_subscriberId != null) {
-      try {
-        ZenohDart.unsubscribe(_subscriberId!);
-      } catch (e) {
-        print('Error unsubscribing: $e');
-      }
-    }
+    _disposeResources();
     _messageController.close();
     super.dispose();
+  }
+
+  Future<void> _disposeResources() async {
+    await _subscriber?.undeclare();
+    await _session?.close();
   }
 }

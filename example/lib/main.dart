@@ -1,51 +1,58 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart';
-import 'package:zenoh_dart_example/multiple_subscriber_page.dart'
-    show MultipleSubscribersPage;
+import 'zenoh_pub_sub_page.dart';
+import 'multiple_subscriber_page.dart';
+import 'stream_page.dart';
+import 'todo_page.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    // Clean up Zenoh when app is disposed
-    ZenohDart.cleanup();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Clean up when app goes to background to prevent callbacks after isolate death
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      ZenohDart.closeSession();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Zenoh Demo',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: MultipleSubscribersPage(),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Zenoh Dart Examples')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildNavButton(context, 'Basic Pub/Sub', const ZenohPubSubPage()),
+          const SizedBox(height: 8),
+          _buildNavButton(
+              context, 'Multiple Subscribers', const MultipleSubscribersPage()),
+          const SizedBox(height: 8),
+          _buildNavButton(context, 'Stream API', const ZenohStreamPage()),
+          const SizedBox(height: 8),
+          _buildNavButton(context, 'Distributed Todo List', const TodoPage()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavButton(BuildContext context, String title, Widget page) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(title, style: const TextStyle(fontSize: 18)),
+      ),
     );
   }
 }

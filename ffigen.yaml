@@ -5,26 +5,18 @@ description: |
 
   Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
 # output: "lib/zenoh_dart_bindings_generated.dart"
-
 output:
-  bindings: 'lib/src/gen/zenoh_dart_bindings_generated.dart'
+  bindings: "lib/src/gen/zenoh_dart_bindings_generated.dart"
   symbol-file:
-    output: 'lib/src/gen/zenoh_dart_bindings_generated_symbols.yaml'
-    import-path: 'package:zenoh_dart/src/gen/zenoh_dart_bindings_generated.dart'
-
+    output: "lib/src/gen/zenoh_dart_bindings_generated_symbols.yaml"
+    import-path: "package:zenoh_dart/src/gen/zenoh_dart_bindings_generated.dart"
 
 headers:
   entry-points:
     - "src/zenoh_dart.h"
   include-directives:
     - "src/zenoh_dart.h"
-    # TODO : Update these paths according to src/include location
-    - "/home/harunkurtdev/zenoh_dart/example/build/linux/x64/debug/_deps/zenohc-build/release/include/zenoh.h"
-    - "/home/harunkurtdev/zenoh_dart/example/build/linux/x64/debug/_deps/zenohc-build/release/include/zenoh_memory.h"
-    - "/home/harunkurtdev/zenoh_dart/example/build/linux/x64/debug/_deps/zenohc-build/release/include/zenoh_constants.h"
-    # - "/Users/harunkurtdev/Desktop/zenoh_dart/src/build/_deps/zenohc-src/release/include/zenoh.h"
-    # - "/Users/harunkurtdev/Desktop/zenoh_dart/src/build/_deps/zenohc-src/release/include/zenoh_memory.h"
-    # - "/Users/harunkurtdev/Desktop/zenoh_dart/src/build/_deps/zenohc-src/release/include/zenoh_constants.h"
+
 preamble: |
   // ignore_for_file: always_specify_types
   // ignore_for_file: camel_case_types
@@ -34,10 +26,5 @@ comments:
   length: full
 
 compiler-opts:
-  - "-I/usr/local/include"
-  - "-I/usr/local/include/zenoh"
-  - "-I/usr/local/include/zenoh/plugins"
-  - "-I/home/harunkurtdev/zenoh_dart/example/build/linux/x64/debug/_deps/zenohc-build/release/include"
-  - "-I/home/harunkurtdev/zenoh_dart/example/build/linux/x64/debug/_deps/zenohc-build/debug/include"
-  # - "-I/Users/harunkurtdev/Desktop/zenoh_dart/src/build/_deps/zenohc-src/release/include"
-  # - "-I/Users/harunkurtdev/Desktop/zenoh_dart/src/build/_deps/zenohc-src/debug/include"
+  - "-Isrc/include"
+  - "-Wno-nullability-completeness"

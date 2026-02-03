@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart' show ZenohDart;
+import 'package:zenoh_dart/zenoh_dart.dart';
 
 class ZenohHomePage extends StatefulWidget {
   const ZenohHomePage({super.key});
@@ -9,8 +9,9 @@ class ZenohHomePage extends StatefulWidget {
 }
 
 class _ZenohHomePageState extends State<ZenohHomePage> {
+  ZenohSession? _session;
+  ZenohSubscriber? _subscriber;
   String _receivedValue = 'Waiting for data...';
-  int? _subscriberId;
   bool _isInitializing = true;
   String? _errorMessage;
   bool _isDisposed = false;
@@ -29,16 +30,8 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
     super.reassemble();
     // Hot reload detected - clean up old subscriptions
     print('Hot reload detected - cleaning up...');
-    if (_subscriberId != null) {
-      try {
-        ZenohDart.unsubscribe(_subscriberId!);
-        _subscriberId = null;
-      } catch (e) {
-        print('Error during hot reload cleanup: $e');
-      }
-    }
-    // Reinitialize
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _disposeResources().then((_) {
+      // Reinitialize
       if (mounted && !_isDisposed) {
         setState(() {
           _isInitializing = true;
@@ -53,8 +46,8 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
     if (_isDisposed) return;
 
     try {
-      // Initialize session and isolate
-      await ZenohDart.initialize(mode: 'client', endpoints: [
+      // Initialize session
+      _session = await ZenohSession.open(mode: 'client', endpoints: [
         'tcp/localhost:7447',
         'tcp/10.51.45.140:7447',
         'tcp/127.0.0.1:7447',
@@ -62,20 +55,20 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
       ]);
 
       // Subscribe
-      final subscriberId = await ZenohDart.subscribe(
-        'mqtt/demo/sensor/temperature',
-        (key, value, kind, attachment, id) {
-          if (mounted && !_isDisposed) {
-            setState(() {
-              _receivedValue = 'Key: $key\nValue: $value\nKind: $kind';
-            });
-          }
-        },
-      );
+      _subscriber =
+          await _session!.declareSubscriber('mqtt/demo/sensor/temperature');
+
+      _subscriber!.stream.listen((sample) {
+        if (mounted && !_isDisposed) {
+          setState(() {
+            _receivedValue =
+                'Key: ${sample.key}\nValue: ${sample.payloadString}\nKind: ${sample.kind}';
+          });
+        }
+      });
 
       if (!_isDisposed && mounted) {
         setState(() {
-          _subscriberId = subscriberId;
           _isInitializing = false;
           _errorMessage = null;
         });
@@ -133,7 +126,7 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
                 children: [
                   const Icon(Icons.check_circle, color: Colors.green, size: 48),
                   const SizedBox(height: 16),
-                  Text('Subscribed with ID: $_subscriberId'),
+                  Text('Subscribed to "mqtt/demo/sensor/temperature"'),
                   const SizedBox(height: 32),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -152,10 +145,10 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
               ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _subscriberId != null && !_isInitializing
+              onPressed: _subscriber != null && !_isInitializing
                   ? () {
                       try {
-                        ZenohDart.publish(
+                        _session?.putString(
                             'demo/example', 'Hello from Flutter!');
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -182,13 +175,11 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
   @override
   void dispose() {
     _isDisposed = true;
-    if (_subscriberId != null) {
-      try {
-        ZenohDart.unsubscribe(_subscriberId!);
-      } catch (e) {
-        print('Error unsubscribing: $e');
-      }
-    }
+    _disposeResources();
     super.dispose();
+  }
+
+  Future<void> _disposeResources() async {
+    await _session?.close();
   }
 }
