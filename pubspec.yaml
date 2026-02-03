@@ -1,11 +1,12 @@
 name: zenoh_dart
-description: "A new Flutter FFI plugin project."
+description: "A Dart binding for Zenoh protocol enabling high-performance pub/sub and distributed computing."
 version: 0.0.1
-# homepage:
+homepage: https://github.com/example/zenoh_dart
+repository: https://github.com/example/zenoh_dart
 
 environment:
   sdk: ^3.5.2
-  flutter: '>=3.3.0'
+  flutter: ">=3.3.0"
 
 dependencies:
   flutter:

@@ -214,6 +214,8 @@ if(IS_IOS)
         COMMAND ${CMAKE_COMMAND} -E remove -f ${ZENOHC_BUILD_DIR}/target/x86_64-apple-darwin/release/libzenohc.dylib
         # Build for iOS target with explicit Rust environment
         COMMAND ${CMAKE_COMMAND} -E env 
+            RUSTUP_HOME=$ENV{HOME}/.rustup
+            CARGO_HOME=$ENV{HOME}/.cargo
             cargo ${CARGO_TOOLCHAIN} build --release --target ${RUST_TARGET} --lib ${BUILD_STD}
         # Verify the output is a static library
         COMMAND ${CMAKE_COMMAND} -E echo "Verifying iOS build..."

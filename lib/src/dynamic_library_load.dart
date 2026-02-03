@@ -12,14 +12,13 @@ class DynamicLibraryLoader {
   }
   DynamicLibraryLoader._internal() {
     if (Platform.isMacOS || Platform.isIOS) {
-      library = DynamicLibrary.open('${_libName}.framework/${_libName}');
+      library = DynamicLibrary.open('$_libName.framework/$_libName');
+    } else if (Platform.isAndroid || Platform.isLinux) {
+      library = DynamicLibrary.open('lib$_libName.so');
+    } else if (Platform.isWindows) {
+      library = DynamicLibrary.open('$_libName.dll');
+    } else {
+      throw UnsupportedError('Unknown platform: ${Platform.operatingSystem}');
     }
-    if (Platform.isAndroid || Platform.isLinux) {
-      library = DynamicLibrary.open('lib${_libName}.so');
-    }
-    if (Platform.isWindows) {
-      library = DynamicLibrary.open('${_libName}.dll');
-    }
-    throw UnsupportedError('Unknown platform: ${Platform.operatingSystem}');
   }
 }
