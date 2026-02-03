@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 class ZenohStreamPage extends StatefulWidget {
   const ZenohStreamPage({super.key});

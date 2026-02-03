@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 class ZenohHomePage extends StatefulWidget {
   const ZenohHomePage({super.key});

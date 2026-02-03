@@ -8,10 +8,10 @@ This document explains how to set up automated publishing to pub.dev using GitHu
 
 1. Go to [pub.dev](https://pub.dev)
 2. Log in with your Google account
-3. Go to your package page: https://pub.dev/packages/zenoh_dart
+3. Go to your package page: https://pub.dev/packages/zenoh_ffi
 4. Click on the **Admin** tab
 5. Under **Automated publishing**, click **Enable publishing from GitHub Actions**
-6. Select your repository: `harunkurtdev/zenoh_dart`
+6. Select your repository: `harunkurtdev/zenoh_ffi`
 7. Save the settings
 
 ### 2. Repository Settings

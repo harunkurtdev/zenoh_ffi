@@ -1,12 +1,12 @@
-# zenoh_dart
+# zenoh_ffi
 
-[![Pub Version](https://img.shields.io/pub/v/zenoh_dart)](https://pub.dev/packages/zenoh_dart)
-[![CI](https://github.com/harunkurtdev/zenoh_dart/actions/workflows/ci.yml/badge.svg)](https://github.com/harunkurtdev/zenoh_dart/actions/workflows/ci.yml)
+[![Pub Version](https://img.shields.io/pub/v/zenoh_ffi)](https://pub.dev/packages/zenoh_ffi)
+[![CI](https://github.com/harunkurtdev/zenoh_ffi/actions/workflows/ci.yml/badge.svg)](https://github.com/harunkurtdev/zenoh_ffi/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20EPL%202.0-blue.svg)](LICENSE)
 
-A Dart binding for [Zenoh](https://zenoh.io/) - a high-performance, zero-overhead pub/sub, store/query, and compute protocol that unifies data in motion, data at rest, and computations.
+A Dart FFI binding for [Zenoh](https://zenoh.io/) - a high-performance, zero-overhead pub/sub, store/query, and compute protocol that unifies data in motion, data at rest, and computations.
 
-`zenoh_dart` enables Dart and Flutter applications to seamlessly integrate with Zenoh's distributed systems capabilities.
+`zenoh_ffi` enables Dart and Flutter applications to seamlessly integrate with Zenoh's distributed systems capabilities through native FFI bindings.
 
 ![Video](./doc/video.MP4)
 
@@ -25,11 +25,11 @@ A Dart binding for [Zenoh](https://zenoh.io/) - a high-performance, zero-overhea
 
 ## Getting Started
 
-Add `zenoh_dart` to your `pubspec.yaml`:
+Add `zenoh_ffi` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  zenoh_dart: ^0.0.1
+  zenoh_ffi: ^0.1.0
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ dependencies:
 ### 1. Open a Session
 
 ```dart
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 void main() async {
   // Simple client session
@@ -260,7 +260,7 @@ make
 
 ### Android
 
-The native libraries (`libzenoh_dart.so`) must be present in `android/src/main/jniLibs`.
+The native libraries (`libzenoh_ffi.so`) must be present in `android/src/main/jniLibs`.
 
 ### macOS / Linux
 
@@ -268,7 +268,7 @@ The dynamic library should be available in the load path or bundled with the app
 
 ### Windows
 
-The `zenoh_dart.dll` must be in the application's directory or system PATH.
+The `zenoh_ffi.dll` must be in the application's directory or system PATH.
 
 ## Feature Status
 

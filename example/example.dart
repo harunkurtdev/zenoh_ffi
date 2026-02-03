@@ -1,4 +1,4 @@
-/// This example demonstrates the basic usage of zenoh_dart package.
+/// This example demonstrates the basic usage of zenoh_ffi package.
 ///
 /// For a complete Flutter application example, see the `lib/` directory.
 library;
@@ -7,7 +7,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 Future<void> main() async {
   // Example 1: Open a session

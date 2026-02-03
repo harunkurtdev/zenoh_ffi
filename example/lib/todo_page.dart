@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 class Todo {
   final String id;
@@ -173,7 +173,7 @@ class _TodoPageState extends State<TodoPage> {
     });
 
     if (_isConnected) {
-      // zenoh_dart doesn't have explicit delete exposed yet in helper,
+      // zenoh_ffi doesn't have explicit delete exposed yet in helper,
       // but we wrapped it? No, we missed exposing `delete` in ZenohSession dart class!
       // Wait, let me check ZenohSession again.
       // I missed `delete` in the rewrite!

@@ -1,4 +1,4 @@
-/// Zenoh Dart - A Dart binding for the Zenoh protocol
+/// Zenoh FFI - A Dart FFI binding for the Zenoh protocol
 ///
 /// This library provides a complete Dart API for Zenoh, including:
 /// - Session management
@@ -8,7 +8,7 @@
 /// - Priority and congestion control
 /// - Encoding support
 /// - Attachment/metadata support
-library zenoh_dart;
+library zenoh_ffi;
 
 import 'dart:async';
 import 'dart:ffi';
@@ -17,13 +17,13 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'dart:convert';
 
-import 'src/gen/zenoh_dart_bindings_generated.dart' as bindings;
+import 'src/gen/zenoh_ffi_bindings_generated.dart' as bindings;
 
 // ============================================================================
 // Library Loading
 // ============================================================================
 
-const String _libName = 'zenoh_dart';
+const String _libName = 'zenoh_ffi';
 
 /// The dynamic library in which the symbols for [ZenohDartBindings] can be found.
 final DynamicLibrary _dylib = () {

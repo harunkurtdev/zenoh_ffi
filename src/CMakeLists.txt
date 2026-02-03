@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(zenoh_dart_library VERSION 0.0.1 LANGUAGES C)
+project(zenoh_ffi_library VERSION 0.0.1 LANGUAGES C)
 include(FetchContent)
 
 # Zenoh-C Download & Setup
@@ -231,23 +231,23 @@ endif()
 
 # --- Zenoh Dart library ---
 if (IS_IOS)
-    add_library(zenoh_dart STATIC
-        "zenoh_dart.c"
+    add_library(zenoh_ffi STATIC
+        "zenoh_ffi.c"
     )
 else()
-    add_library(zenoh_dart SHARED
-        "zenoh_dart.c"
+    add_library(zenoh_ffi SHARED
+        "zenoh_ffi.c"
     )
 endif()
 
-set_target_properties(zenoh_dart PROPERTIES
-    PUBLIC_HEADER zenoh_dart.h
-    OUTPUT_NAME "zenoh_dart"
+set_target_properties(zenoh_ffi PROPERTIES
+    PUBLIC_HEADER zenoh_ffi.h
+    OUTPUT_NAME "zenoh_ffi"
 )
 
 # Platform-specific properties
 if(IS_ANDROID)
-    set_target_properties(zenoh_dart PROPERTIES
+    set_target_properties(zenoh_ffi PROPERTIES
         BUILD_RPATH "\$ORIGIN"
         INSTALL_RPATH "\$ORIGIN"
         LINK_FLAGS "-Wl,-rpath,'\$ORIGIN'"
@@ -255,21 +255,21 @@ if(IS_ANDROID)
 elseif(IS_IOS)
     # iOS doesn't support dynamic libraries in the same way
     # Set minimal properties for iOS framework
-    set_target_properties(zenoh_dart PROPERTIES
+    set_target_properties(zenoh_ffi PROPERTIES
         FRAMEWORK FALSE
         XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
         XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
         XCODE_ATTRIBUTE_ENABLE_BITCODE "NO"
     )
 elseif(IS_MACOS)
-    set_target_properties(zenoh_dart PROPERTIES
+    set_target_properties(zenoh_ffi PROPERTIES
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_NAME_DIR "@rpath"
         BUILD_RPATH "@loader_path"
         INSTALL_RPATH "@loader_path"
     )
 elseif(UNIX)
-    set_target_properties(zenoh_dart PROPERTIES
+    set_target_properties(zenoh_ffi PROPERTIES
         BUILD_RPATH "\$ORIGIN"
         INSTALL_RPATH "\$ORIGIN"
     )
@@ -277,21 +277,21 @@ endif()
 
 # Include directories
 if(IS_ANDROID)
-    target_include_directories(zenoh_dart
+    target_include_directories(zenoh_ffi
         PRIVATE
         ${zenohc_SOURCE_DIR}/include
         ${zenohc_BINARY_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}
     )
 elseif(IS_IOS)
-    target_include_directories(zenoh_dart
+    target_include_directories(zenoh_ffi
         PUBLIC
         ${zenohc_SOURCE_DIR}/include
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
     )
 else()
-    target_include_directories(zenoh_dart
+    target_include_directories(zenoh_ffi
         PUBLIC
         ${zenohc_SOURCE_DIR}/include
         PRIVATE
@@ -299,12 +299,12 @@ else()
     )
 endif()
 
-target_compile_definitions(zenoh_dart PUBLIC DART_SHARED_LIB)
+target_compile_definitions(zenoh_ffi PUBLIC DART_SHARED_LIB)
 
 # --- Link libraries ---
 if(IS_ANDROID)
     find_library(log-lib log)
-    add_dependencies(zenoh_dart build_zenohc_android)
+    add_dependencies(zenoh_ffi build_zenohc_android)
     
     # Import zenohc as an imported library
     add_library(zenohc SHARED IMPORTED)
@@ -313,26 +313,26 @@ if(IS_ANDROID)
         IMPORTED_NO_SONAME TRUE
     )
     
-    # Link zenoh_dart with zenohc and log
-    target_link_libraries(zenoh_dart PRIVATE ${log-lib} zenohc)
+    # Link zenoh_ffi with zenohc and log
+    target_link_libraries(zenoh_ffi PRIVATE ${log-lib} zenohc)
     
     # Set linker flags to use relative RPATH
-    target_link_options(zenoh_dart PRIVATE
+    target_link_options(zenoh_ffi PRIVATE
         "-Wl,-rpath,'$ORIGIN'"
         "-Wl,--enable-new-dtags"
     )
     
     # Copy libzenohc.so to the output directory so it's included in the APK
-    add_custom_command(TARGET zenoh_dart POST_BUILD
+    add_custom_command(TARGET zenoh_ffi POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${ZENOHC_LIB}
-            $<TARGET_FILE_DIR:zenoh_dart>/libzenohc.so
-        COMMAND ${CMAKE_COMMAND} -E echo "Copied libzenohc.so to $<TARGET_FILE_DIR:zenoh_dart>/"
+            $<TARGET_FILE_DIR:zenoh_ffi>/libzenohc.so
+        COMMAND ${CMAKE_COMMAND} -E echo "Copied libzenohc.so to $<TARGET_FILE_DIR:zenoh_ffi>/"
         COMMENT "Copying libzenohc.so to output directory"
     )
 elseif(IS_IOS)
     # iOS specific linking
-    add_dependencies(zenoh_dart build_zenohc_ios)
+    add_dependencies(zenoh_ffi build_zenohc_ios)
     
     # Import zenohc as a static library for iOS
     add_library(zenohc STATIC IMPORTED)
@@ -342,7 +342,7 @@ elseif(IS_IOS)
     )
     
     # Link with static library and system frameworks
-    target_link_libraries(zenoh_dart PRIVATE 
+    target_link_libraries(zenoh_ffi PRIVATE 
         zenohc
         "-framework Foundation"
         "-framework Security"
@@ -352,7 +352,7 @@ elseif(IS_IOS)
     )
     
     # Force static linking of zenohc
-    target_link_options(zenoh_dart PRIVATE
+    target_link_options(zenoh_ffi PRIVATE
         "-force_load" "${ZENOHC_LIB}"
     )
 else()
@@ -456,50 +456,50 @@ else()
         )
     endif()
     
-    add_dependencies(zenoh_dart build_zenohc)
-    target_link_libraries(zenoh_dart PRIVATE zenohc)
+    add_dependencies(zenoh_ffi build_zenohc)
+    target_link_libraries(zenoh_ffi PRIVATE zenohc)
     
     # Platform-specific linking options
     if(IS_MACOS)
-        target_link_options(zenoh_dart PRIVATE
+        target_link_options(zenoh_ffi PRIVATE
             "-Wl,-rpath,@loader_path"
             "-Wl,-rpath,@loader_path/../Frameworks"
         )
     elseif(UNIX AND NOT APPLE)
         # Linux and BSD systems
-        target_link_options(zenoh_dart PRIVATE
+        target_link_options(zenoh_ffi PRIVATE
             "-Wl,-rpath,$ORIGIN"
         )
     endif()
     
     # Copy zenohc library to output directory
     if(IS_MACOS)
-        add_custom_command(TARGET zenoh_dart POST_BUILD
+        add_custom_command(TARGET zenoh_ffi POST_BUILD
             # Copy libzenohc.dylib to framework's Versions/A directory
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${ZENOHC_LIB}
-                $<TARGET_FILE_DIR:zenoh_dart>/libzenohc.dylib
+                $<TARGET_FILE_DIR:zenoh_ffi>/libzenohc.dylib
             # Configure libzenohc.dylib install name
             COMMAND install_name_tool -id "@rpath/libzenohc.dylib" 
-                $<TARGET_FILE_DIR:zenoh_dart>/libzenohc.dylib
-            # Update zenohc reference in zenoh_dart to use @rpath
+                $<TARGET_FILE_DIR:zenoh_ffi>/libzenohc.dylib
+            # Update zenohc reference in zenoh_ffi to use @rpath
             COMMAND install_name_tool -change 
                 "${ZENOHC_LIB}"
                 "@rpath/libzenohc.dylib"
-                $<TARGET_FILE:zenoh_dart>
+                $<TARGET_FILE:zenoh_ffi>
             # Verify the configuration
             COMMAND ${CMAKE_COMMAND} -E echo "✓ Framework binary install name:"
-            COMMAND otool -D $<TARGET_FILE:zenoh_dart>
+            COMMAND otool -D $<TARGET_FILE:zenoh_ffi>
             COMMAND ${CMAKE_COMMAND} -E echo ""
             COMMAND ${CMAKE_COMMAND} -E echo "✓ Framework binary dependencies:"
-            COMMAND otool -L $<TARGET_FILE:zenoh_dart>
+            COMMAND otool -L $<TARGET_FILE:zenoh_ffi>
             COMMENT "Configuring zenoh-c library for macOS framework"
         )
     else()
-        add_custom_command(TARGET zenoh_dart POST_BUILD
+        add_custom_command(TARGET zenoh_ffi POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${ZENOHC_LIB}
-                $<TARGET_FILE_DIR:zenoh_dart>/
+                $<TARGET_FILE_DIR:zenoh_ffi>/
             COMMENT "Copying zenoh-c library to output directory"
         )
     endif()
@@ -507,7 +507,7 @@ endif()
 
 if(NOT IS_ANDROID)
     # Only hide symbols on non-Android platforms if needed
-    # set_target_properties(zenoh_dart PROPERTIES
+    # set_target_properties(zenoh_ffi PROPERTIES
     #     C_VISIBILITY_PRESET hidden
     #     VISIBILITY_INLINES_HIDDEN YES
     # )
@@ -515,5 +515,5 @@ endif()
 
 # --- Windows export symbol handling ---
 if(WIN32)
-    target_compile_definitions(zenoh_dart PRIVATE ZENOH_DART_EXPORTS)
+    target_compile_definitions(zenoh_ffi PRIVATE ZENOH_DART_EXPORTS)
 endif()

@@ -1,21 +1,21 @@
 # Run with `dart run ffigen --config ffigen.yaml`.
 name: ZenohDartBindings
 description: |
-  Bindings for `src/zenoh_dart.h`.
+  Bindings for `src/zenoh_ffi.h`.
 
   Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
-# output: "lib/zenoh_dart_bindings_generated.dart"
+# output: "lib/zenoh_ffi_bindings_generated.dart"
 output:
-  bindings: "lib/src/gen/zenoh_dart_bindings_generated.dart"
+  bindings: "lib/src/gen/zenoh_ffi_bindings_generated.dart"
   symbol-file:
-    output: "lib/src/gen/zenoh_dart_bindings_generated_symbols.yaml"
-    import-path: "package:zenoh_dart/src/gen/zenoh_dart_bindings_generated.dart"
+    output: "lib/src/gen/zenoh_ffi_bindings_generated_symbols.yaml"
+    import-path: "package:zenoh_ffi/src/gen/zenoh_ffi_bindings_generated.dart"
 
 headers:
   entry-points:
-    - "src/zenoh_dart.h"
+    - "src/zenoh_ffi.h"
   include-directives:
-    - "src/zenoh_dart.h"
+    - "src/zenoh_ffi.h"
 
 preamble: |
   // ignore_for_file: always_specify_types

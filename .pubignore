@@ -19,3 +19,31 @@ src/build/
 
 # Python scripts (not needed for pub)
 *.py
+
+# Large video files
+doc/video.MP4
+doc/*.mp4
+doc/*.MP4
+*.mp4
+*.MP4
+
+# Old files with previous package name
+ios/Classes/zenoh_dart.c
+ios/zenoh_dart.podspec
+macos/Classes/zenoh_dart.c
+macos/zenoh_dart.podspec
+lib/zenoh_dart.dart
+lib/src/gen/zenoh_dart_bindings_generated.dart
+lib/src/gen/zenoh_dart_bindings_generated_symbols.yaml
+src/zenoh_dart.c
+src/zenoh_dart.h
+test/zenoh_dart_test.dart
+
+# Generated Pod files (will be regenerated)
+example/ios/Pods/
+example/macos/Pods/
+example/macos/Podfile.lock
+example/ios/Podfile.lock
+
+# Xcode project (references old name, will be auto-fixed by Flutter)
+example/macos/Runner.xcodeproj/project.pbxproj

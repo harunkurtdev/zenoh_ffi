@@ -1,4 +1,4 @@
-package com.example.zenoh_dart_example
+package com.example.zenoh_ffi_example
 
 import io.flutter.embedding.android.FlutterActivity
 

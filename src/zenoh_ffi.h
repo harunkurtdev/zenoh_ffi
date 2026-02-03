@@ -1,5 +1,5 @@
-#ifndef ZENOH_DART_H
-#define ZENOH_DART_H
+#ifndef ZENOH_FFI_H
+#define ZENOH_FFI_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -304,4 +304,4 @@ FFI_PLUGIN_EXPORT void zenoh_get_options_default(ZenohGetOptions *options);
 FFI_PLUGIN_EXPORT const char *zenoh_encoding_to_string(ZenohEncodingId encoding);
 FFI_PLUGIN_EXPORT ZenohEncodingId zenoh_encoding_from_string(const char *str);
 
-#endif  // ZENOH_DART_H
+#endif  // ZENOH_FFI_H

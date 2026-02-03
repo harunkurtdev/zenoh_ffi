@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint zenoh_dart.podspec` to validate before publishing.
+# Run `pod lib lint zenoh_ffi.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'zenoh_dart'
+  s.name             = 'zenoh_ffi'
   s.version          = '0.0.1'
   s.summary          = 'A new Flutter FFI plugin project.'
   s.description      = <<-DESC
@@ -30,7 +30,7 @@ A new Flutter FFI plugin project.
     'DEFINES_MODULE' => 'YES',
     'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build/_deps/zenohc-src/include"',
     'LIBRARY_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build"',
-    'OTHER_LDFLAGS' => '$(inherited) -lzenohc -lzenoh_dart'
+    'OTHER_LDFLAGS' => '$(inherited) -lzenohc -lzenoh_ffi'
   }
   
   # CMake build için prepare_command
@@ -130,12 +130,12 @@ A new Flutter FFI plugin project.
   #               :script => 'set -e
   #         FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
   #         mkdir -p "${FRAMEWORKS_DIR}"
-  #         cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenoh_dart.dylib" "${FRAMEWORKS_DIR}/"
+  #         cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenoh_ffi.dylib" "${FRAMEWORKS_DIR}/"
   #         cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenohc.dylib" "${FRAMEWORKS_DIR}/"
-  #         # cp -R "${PODS_TARGET_SRCROOT}/../src/build/zenoh_dart.framework" "${FRAMEWORKS_DIR}/"
-  #         codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenoh_dart.dylib" || true
+  #         # cp -R "${PODS_TARGET_SRCROOT}/../src/build/zenoh_ffi.framework" "${FRAMEWORKS_DIR}/"
+  #         codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenoh_ffi.dylib" || true
   #         codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenohc.dylib" || true
-  #         # codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/zenoh_dart.framework" || true
+  #         # codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/zenoh_ffi.framework" || true
   #         ',
   #       :execution_position => :after_compile
   #     }
@@ -151,11 +151,11 @@ A new Flutter FFI plugin project.
   
   # Vendored libraries
   s.vendored_libraries = [
-  '../src/build/libzenoh_dart.a',  
+  '../src/build/libzenoh_ffi.a',  
   '../src/build/libzenohc.a'      
 ]
 
-  s.vendored_frameworks = '../src/build/zenoh_dart.framework'
+  s.vendored_frameworks = '../src/build/zenoh_ffi.framework'
   
   s.public_header_files = [
     'Classes/**/*.h'

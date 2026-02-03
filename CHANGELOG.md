@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2024-01-XX
+## [0.1.0] - 2025-02-03
+
+### Changed
+- **Package Renamed**: Package renamed from `zenoh_dart` to `zenoh_ffi` due to naming conflict on pub.dev
+- This is a fresh release with all features from the original development
 
 ### Added
 
@@ -67,25 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive test suite for all public APIs
   - Tests for enums, data classes, options, and utilities
 
-### Changed
-
-- Updated Dart SDK constraint to `>=3.0.0 <4.0.0`
-- Improved memory management in native callbacks
-- Enhanced error messages with error codes
-
-### Fixed
-
-- Query timeout now properly configurable (was hardcoded to 2 seconds)
-- Memory leaks in callback handling
-- StreamController cleanup on undeclare
-
-## [0.0.1] - 2024-XX-XX
-
-### Added
-
-- Initial release of `zenoh_dart`
-- Basic support for Zenoh Session (Client/Peer)
-- Publisher and Subscriber implementation
-- Query and Queryable support
-- Scouting functionality
-- FFI bindings for Android, macOS, Linux, iOS, Windows
+- **Core Features** (from original development)
+  - Zenoh Session Management (Client/Peer modes)
+  - Publisher and Subscriber implementation
+  - Query and Queryable support
+  - Scouting functionality
+  - FFI bindings for Android, macOS, Linux, iOS, Windows

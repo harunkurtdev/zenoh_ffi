@@ -3,7 +3,7 @@
 // ============================================
 
 import 'package:flutter/material.dart';
-import 'package:zenoh_dart/zenoh_dart.dart';
+import 'package:zenoh_ffi/zenoh_ffi.dart';
 
 class MultipleSubscribersPage extends StatefulWidget {
   const MultipleSubscribersPage({super.key});

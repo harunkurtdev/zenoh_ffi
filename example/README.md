@@ -1,6 +1,6 @@
-# zenoh_dart_example
+# zenoh_ffi_example
 
-Demonstrates how to use the zenoh_dart plugin.
+Demonstrates how to use the zenoh_ffi plugin.
 
 ## Getting Started
 

@@ -1,13 +1,13 @@
-name: zenoh_dart
+name: zenoh_ffi
 description: >-
-  A Dart/Flutter binding for Zenoh protocol enabling high-performance pub/sub,
+  A Dart/Flutter FFI binding for Zenoh protocol enabling high-performance pub/sub,
   query/reply, and distributed computing. Supports liveliness tokens, priority
-  levels, encoding types, and cross-platform FFI bindings.
-version: 0.3.0
-homepage: https://github.com/harunkurtdev/zenoh_dart
-repository: https://github.com/harunkurtdev/zenoh_dart
-issue_tracker: https://github.com/harunkurtdev/zenoh_dart/issues
-documentation: https://github.com/harunkurtdev/zenoh_dart#readme
+  levels, encoding types, and cross-platform native bindings.
+version: 0.1.0
+homepage: https://github.com/harunkurtdev/zenoh_ffi
+repository: https://github.com/harunkurtdev/zenoh_ffi
+issue_tracker: https://github.com/harunkurtdev/zenoh_ffi/issues
+documentation: https://github.com/harunkurtdev/zenoh_ffi#readme
 
 topics:
   - zenoh
