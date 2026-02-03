@@ -1,0 +1,51 @@
+# Publish to pub.dev when a new release tag is pushed
+# Usage: git tag v0.3.0 && git push origin v0.3.0
+
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'  # v1.0.0, v1.0.0-beta.1, etc.
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish to pub.dev
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Required for authentication with pub.dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter installation
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: dart analyze lib/ test/
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Check publish requirements
+        run: dart pub publish --dry-run
+
+      - name: Publish to pub.dev
+        run: dart pub publish --force

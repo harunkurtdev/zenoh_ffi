@@ -1,0 +1,21 @@
+# Build artifacts
+src/build/
+*.o
+*.so
+*.dylib
+*.a
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.log
+*.tmp
+
+# Python scripts (not needed for pub)
+*.py

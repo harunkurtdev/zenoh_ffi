@@ -53,8 +53,9 @@ class ZenohException implements Exception {
   ZenohException(this.message, [this.errorCode]);
 
   @override
-  String toString() =>
-      errorCode != null ? 'ZenohException: $message (code: $errorCode)' : 'ZenohException: $message';
+  String toString() => errorCode != null
+      ? 'ZenohException: $message (code: $errorCode)'
+      : 'ZenohException: $message';
 }
 
 /// Exception thrown when session operations fail
@@ -94,7 +95,7 @@ class ZenohLivelinessException extends ZenohException {
 
 /// Exception thrown when timeout occurs
 class ZenohTimeoutException extends ZenohException {
-  ZenohTimeoutException(super.message) : super(null);
+  ZenohTimeoutException(String message) : super(message, null);
 }
 
 // ============================================================================
@@ -232,7 +233,8 @@ class ZenohSample {
       attachment != null ? utf8.decode(attachment!) : null;
 
   @override
-  String toString() => 'ZenohSample(key: $key, kind: $kind, size: ${payload.length})';
+  String toString() =>
+      'ZenohSample(key: $key, kind: $kind, size: ${payload.length})';
 }
 
 /// Represents a reply from a Zenoh query
@@ -259,7 +261,8 @@ class ZenohReply {
       attachment != null ? utf8.decode(attachment!) : null;
 
   @override
-  String toString() => 'ZenohReply(key: $key, kind: $kind, size: ${payload.length})';
+  String toString() =>
+      'ZenohReply(key: $key, kind: $kind, size: ${payload.length})';
 }
 
 /// Represents a query received by a Queryable
@@ -283,7 +286,8 @@ class ZenohQuery {
   }) : _replyContext = replyContext;
 
   /// Send a reply to this query
-  void reply(String key, Uint8List data, {ZenohEncoding? encoding, Uint8List? attachment}) {
+  void reply(String key, Uint8List data,
+      {ZenohEncoding? encoding, Uint8List? attachment}) {
     final keyPtr = key.toNativeUtf8().cast<Char>();
     final dataPtr = calloc<Uint8>(data.length);
     final dataList = dataPtr.asTypedList(data.length);
@@ -318,12 +322,15 @@ class ZenohQuery {
   }
 
   /// Send a string reply
-  void replyString(String key, String data, {ZenohEncoding? encoding, String? attachment}) {
+  void replyString(String key, String data,
+      {ZenohEncoding? encoding, String? attachment}) {
     reply(
       key,
       Uint8List.fromList(utf8.encode(data)),
       encoding: encoding ?? ZenohEncoding.textPlain,
-      attachment: attachment != null ? Uint8List.fromList(utf8.encode(attachment)) : null,
+      attachment: attachment != null
+          ? Uint8List.fromList(utf8.encode(attachment))
+          : null,
     );
   }
 
@@ -333,7 +340,9 @@ class ZenohQuery {
       key,
       Uint8List.fromList(utf8.encode(jsonEncode(data))),
       encoding: ZenohEncoding.applicationJson,
-      attachment: attachment != null ? Uint8List.fromList(utf8.encode(attachment)) : null,
+      attachment: attachment != null
+          ? Uint8List.fromList(utf8.encode(attachment))
+          : null,
     );
   }
 }
@@ -491,7 +500,8 @@ class ZenohSession {
   static final Map<int, StreamController<ZenohSample>> _subscribers = {};
   static final Map<int, StreamController<ZenohReply>> _queries = {};
   static final Map<int, void Function(ZenohQuery)> _queryables = {};
-  static final Map<int, StreamController<ZenohLivelinessEvent>> _livelinessSubscribers = {};
+  static final Map<int, StreamController<ZenohLivelinessEvent>>
+      _livelinessSubscribers = {};
   static final Map<int, Completer<void>> _queryCompleters = {};
 
   static int _nextSubscriberId = 0;
@@ -500,11 +510,15 @@ class ZenohSession {
   static int _nextLivelinessId = 0;
 
   // Native callback pointers
-  static NativeCallable<bindings.ZenohSubscriberCallbackFunction>? _subscriberCallback;
+  static NativeCallable<bindings.ZenohSubscriberCallbackFunction>?
+      _subscriberCallback;
   static NativeCallable<bindings.ZenohGetCallbackFunction>? _queryCallback;
-  static NativeCallable<bindings.ZenohQueryCallbackFunction>? _queryableCallback;
-  static NativeCallable<bindings.ZenohLivelinessCallbackFunction>? _livelinessCallback;
-  static NativeCallable<bindings.ZenohGetCompleteCallbackFunction>? _queryCompleteCallback;
+  static NativeCallable<bindings.ZenohQueryCallbackFunction>?
+      _queryableCallback;
+  static NativeCallable<bindings.ZenohLivelinessCallbackFunction>?
+      _livelinessCallback;
+  static NativeCallable<bindings.ZenohGetCompleteCallbackFunction>?
+      _queryCompleteCallback;
 
   ZenohSession._(this._handle);
 
@@ -552,15 +566,20 @@ class ZenohSession {
 
   static void _ensureCallbacksInitialized() {
     _subscriberCallback ??=
-        NativeCallable<bindings.ZenohSubscriberCallbackFunction>.listener(_onSubscriberData);
+        NativeCallable<bindings.ZenohSubscriberCallbackFunction>.listener(
+            _onSubscriberData);
     _queryCallback ??=
-        NativeCallable<bindings.ZenohGetCallbackFunction>.listener(_onQueryData);
+        NativeCallable<bindings.ZenohGetCallbackFunction>.listener(
+            _onQueryData);
     _queryableCallback ??=
-        NativeCallable<bindings.ZenohQueryCallbackFunction>.listener(_onQueryRequest);
+        NativeCallable<bindings.ZenohQueryCallbackFunction>.listener(
+            _onQueryRequest);
     _livelinessCallback ??=
-        NativeCallable<bindings.ZenohLivelinessCallbackFunction>.listener(_onLivelinessEvent);
+        NativeCallable<bindings.ZenohLivelinessCallbackFunction>.listener(
+            _onLivelinessEvent);
     _queryCompleteCallback ??=
-        NativeCallable<bindings.ZenohGetCompleteCallbackFunction>.listener(_onQueryComplete);
+        NativeCallable<bindings.ZenohGetCompleteCallbackFunction>.listener(
+            _onQueryComplete);
   }
 
   void _checkClosed() {
@@ -604,13 +623,15 @@ class ZenohSession {
     optsPtr.ref.is_express = options.express;
     optsPtr.ref.encoding_schema = nullptr;
 
-    final pubHandle = _bindings.zenoh_declare_publisher_with_options(_handle, keyPtr, optsPtr);
+    final pubHandle = _bindings.zenoh_declare_publisher_with_options(
+        _handle, keyPtr, optsPtr);
 
     calloc.free(keyPtr);
     calloc.free(optsPtr);
 
     if (pubHandle == nullptr) {
-      throw ZenohPublisherException('Failed to declare publisher for key: $key');
+      throw ZenohPublisherException(
+          'Failed to declare publisher for key: $key');
     }
 
     return ZenohPublisher._(pubHandle);
@@ -638,7 +659,9 @@ class ZenohSession {
 
     if (options.attachment != null && options.attachment!.isNotEmpty) {
       final attPtr = calloc<Uint8>(options.attachment!.length);
-      attPtr.asTypedList(options.attachment!.length).setAll(0, options.attachment!);
+      attPtr
+          .asTypedList(options.attachment!.length)
+          .setAll(0, options.attachment!);
       optsPtr.ref.attachment = attPtr;
       optsPtr.ref.attachment_len = options.attachment!.length;
     } else {
@@ -646,7 +669,8 @@ class ZenohSession {
       optsPtr.ref.attachment_len = 0;
     }
 
-    final result = _bindings.zenoh_put_with_options(_handle, keyPtr, dataPtr, data.length, optsPtr);
+    final result = _bindings.zenoh_put_with_options(
+        _handle, keyPtr, dataPtr, data.length, optsPtr);
 
     if (optsPtr.ref.attachment != nullptr) {
       calloc.free(optsPtr.ref.attachment);
@@ -667,7 +691,8 @@ class ZenohSession {
     await put(
       key,
       Uint8List.fromList(utf8.encode(value)),
-      options: options ?? const ZenohPutOptions(encoding: ZenohEncoding.textPlain),
+      options:
+          options ?? const ZenohPutOptions(encoding: ZenohEncoding.textPlain),
     );
   }
 
@@ -723,7 +748,8 @@ class ZenohSession {
 
     if (subHandle == nullptr) {
       _subscribers.remove(id);
-      throw ZenohSubscriberException('Failed to declare subscriber for key: $key');
+      throw ZenohSubscriberException(
+          'Failed to declare subscriber for key: $key');
     }
 
     controller.onCancel = () {
@@ -761,7 +787,9 @@ class ZenohSession {
 
     if (options.payload != null && options.payload!.isNotEmpty) {
       final payloadPtr = calloc<Uint8>(options.payload!.length);
-      payloadPtr.asTypedList(options.payload!.length).setAll(0, options.payload!);
+      payloadPtr
+          .asTypedList(options.payload!.length)
+          .setAll(0, options.payload!);
       optsPtr.ref.payload = payloadPtr;
       optsPtr.ref.payload_len = options.payload!.length;
     } else {
@@ -771,7 +799,9 @@ class ZenohSession {
 
     if (options.attachment != null && options.attachment!.isNotEmpty) {
       final attPtr = calloc<Uint8>(options.attachment!.length);
-      attPtr.asTypedList(options.attachment!.length).setAll(0, options.attachment!);
+      attPtr
+          .asTypedList(options.attachment!.length)
+          .setAll(0, options.attachment!);
       optsPtr.ref.attachment = attPtr;
       optsPtr.ref.attachment_len = options.attachment!.length;
     } else {
@@ -847,7 +877,8 @@ class ZenohSession {
 
     if (qHandle == nullptr) {
       _queryables.remove(id);
-      throw ZenohQueryableException('Failed to declare queryable for key: $keyExpr');
+      throw ZenohQueryableException(
+          'Failed to declare queryable for key: $keyExpr');
     }
 
     return ZenohQueryable._(qHandle, id);
@@ -862,11 +893,13 @@ class ZenohSession {
     _checkClosed();
     final keyPtr = keyExpr.toNativeUtf8().cast<Char>();
 
-    final tokenHandle = _bindings.zenoh_declare_liveliness_token(_handle, keyPtr);
+    final tokenHandle =
+        _bindings.zenoh_declare_liveliness_token(_handle, keyPtr);
     calloc.free(keyPtr);
 
     if (tokenHandle == nullptr) {
-      throw ZenohLivelinessException('Failed to declare liveliness token for key: $keyExpr');
+      throw ZenohLivelinessException(
+          'Failed to declare liveliness token for key: $keyExpr');
     }
 
     return ZenohLivelinessToken._(tokenHandle);
@@ -897,7 +930,8 @@ class ZenohSession {
 
     if (subHandle == nullptr) {
       _livelinessSubscribers.remove(id);
-      throw ZenohLivelinessException('Failed to declare liveliness subscriber for key: $keyExpr');
+      throw ZenohLivelinessException(
+          'Failed to declare liveliness subscriber for key: $keyExpr');
     }
 
     return ZenohLivelinessSubscriber._(subHandle, controller, id);
@@ -947,7 +981,8 @@ class ZenohSession {
     final controller = StreamController<String>();
 
     final whatPtr = what.toNativeUtf8().cast<Char>();
-    final configPtr = config != null ? config.toNativeUtf8().cast<Char>() : nullptr;
+    final configPtr =
+        config != null ? config.toNativeUtf8().cast<Char>() : nullptr;
 
     final callback = NativeCallable<Void Function(Pointer<Char>)>.listener(
       (Pointer<Char> info) {
@@ -990,8 +1025,10 @@ class ZenohSession {
       _subscribers[id]?.add(ZenohSample(
         key: keyStr,
         payload: payload,
-        kind: kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
-        attachment: attStr.isNotEmpty ? Uint8List.fromList(utf8.encode(attStr)) : null,
+        kind:
+            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
+        attachment:
+            attStr.isNotEmpty ? Uint8List.fromList(utf8.encode(attStr)) : null,
       ));
     }
   }
@@ -1012,7 +1049,8 @@ class ZenohSession {
       _queries[id]?.add(ZenohReply(
         key: keyStr,
         payload: payload,
-        kind: kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
+        kind:
+            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
       ));
     }
   }
@@ -1043,13 +1081,15 @@ class ZenohSession {
       final keyStr = key.cast<Utf8>().toDartString();
       final selectorStr = selector.cast<Utf8>().toDartString();
       final kindStr = kind.cast<Utf8>().toDartString();
-      final payload = len > 0 ? Uint8List.fromList(value.asTypedList(len)) : null;
+      final payload =
+          len > 0 ? Uint8List.fromList(value.asTypedList(len)) : null;
 
       final query = ZenohQuery(
         key: keyStr,
         selector: selectorStr,
         value: payload,
-        kind: kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
+        kind:
+            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
         replyContext: replyContext,
       );
       _queryables[id]?.call(query);
@@ -1064,7 +1104,8 @@ class ZenohSession {
     int id = context.address;
     if (_livelinessSubscribers.containsKey(id)) {
       final keyStr = key.cast<Utf8>().toDartString();
-      _livelinessSubscribers[id]?.add(ZenohLivelinessEvent(keyStr, isAlive != 0));
+      _livelinessSubscribers[id]
+          ?.add(ZenohLivelinessEvent(keyStr, isAlive != 0));
     }
   }
 }
@@ -1103,7 +1144,9 @@ class ZenohPublisher {
 
       if (options.attachment != null && options.attachment!.isNotEmpty) {
         final attPtr = calloc<Uint8>(options.attachment!.length);
-        attPtr.asTypedList(options.attachment!.length).setAll(0, options.attachment!);
+        attPtr
+            .asTypedList(options.attachment!.length)
+            .setAll(0, options.attachment!);
         optsPtr.ref.attachment = attPtr;
         optsPtr.ref.attachment_len = options.attachment!.length;
       } else {
@@ -1111,9 +1154,12 @@ class ZenohPublisher {
         optsPtr.ref.attachment_len = 0;
       }
 
-      result = _bindings.zenoh_publisher_put_with_options(_handle, dataPtr, data.length, optsPtr);
+      result = _bindings.zenoh_publisher_put_with_options(
+          _handle, dataPtr, data.length, optsPtr);
 
-      if (optsPtr.ref.attachment != nullptr) calloc.free(optsPtr.ref.attachment);
+      if (optsPtr.ref.attachment != nullptr) {
+        calloc.free(optsPtr.ref.attachment);
+      }
       calloc.free(optsPtr);
     } else {
       result = _bindings.zenoh_publisher_put(_handle, dataPtr, data.length);
@@ -1121,14 +1167,17 @@ class ZenohPublisher {
 
     calloc.free(dataPtr);
 
-    if (result < 0) throw ZenohPublisherException('Publisher put failed', result);
+    if (result < 0) {
+      throw ZenohPublisherException('Publisher put failed', result);
+    }
   }
 
   /// Put a string through this publisher
   Future<void> putString(String value, {ZenohPutOptions? options}) async {
     await put(
       Uint8List.fromList(utf8.encode(value)),
-      options: options ?? const ZenohPutOptions(encoding: ZenohEncoding.textPlain),
+      options:
+          options ?? const ZenohPutOptions(encoding: ZenohEncoding.textPlain),
     );
   }
 
@@ -1255,7 +1304,7 @@ class ZenohRetry {
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         return await operation();
-      } on ZenohException catch (e) {
+      } on ZenohException {
         if (attempt == maxAttempts) rethrow;
 
         // Wait before retry
@@ -1265,7 +1314,9 @@ class ZenohRetry {
         delay = Duration(
           milliseconds: (delay.inMilliseconds * backoffMultiplier).toInt(),
         );
-        if (delay > maxDelay) delay = maxDelay;
+        if (delay > maxDelay) {
+          delay = maxDelay;
+        }
       }
     }
 
@@ -1282,7 +1333,7 @@ class ZenohRetry {
           yield item;
         }
         return;
-      } on ZenohException catch (e) {
+      } on ZenohException {
         if (attempt == maxAttempts) rethrow;
 
         await Future.delayed(delay);
@@ -1290,7 +1341,9 @@ class ZenohRetry {
         delay = Duration(
           milliseconds: (delay.inMilliseconds * backoffMultiplier).toInt(),
         );
-        if (delay > maxDelay) delay = maxDelay;
+        if (delay > maxDelay) {
+          delay = maxDelay;
+        }
       }
     }
   }

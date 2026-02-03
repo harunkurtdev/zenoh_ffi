@@ -7,7 +7,8 @@ void main() {
   group('ZenohEncoding', () {
     test('fromValue returns correct encoding', () {
       expect(ZenohEncoding.fromValue(1), equals(ZenohEncoding.bytes));
-      expect(ZenohEncoding.fromValue(17), equals(ZenohEncoding.applicationJson));
+      expect(
+          ZenohEncoding.fromValue(17), equals(ZenohEncoding.applicationJson));
       expect(ZenohEncoding.fromValue(4), equals(ZenohEncoding.textPlain));
     });
 
@@ -16,17 +17,22 @@ void main() {
     });
 
     test('fromMimeType returns correct encoding', () {
-      expect(ZenohEncoding.fromMimeType('application/json'), equals(ZenohEncoding.applicationJson));
-      expect(ZenohEncoding.fromMimeType('text/plain'), equals(ZenohEncoding.textPlain));
-      expect(ZenohEncoding.fromMimeType('image/png'), equals(ZenohEncoding.imagePng));
+      expect(ZenohEncoding.fromMimeType('application/json'),
+          equals(ZenohEncoding.applicationJson));
+      expect(ZenohEncoding.fromMimeType('text/plain'),
+          equals(ZenohEncoding.textPlain));
+      expect(ZenohEncoding.fromMimeType('image/png'),
+          equals(ZenohEncoding.imagePng));
     });
 
     test('fromMimeType returns custom for unknown mime', () {
-      expect(ZenohEncoding.fromMimeType('unknown/type'), equals(ZenohEncoding.custom));
+      expect(ZenohEncoding.fromMimeType('unknown/type'),
+          equals(ZenohEncoding.custom));
     });
 
     test('mimeType returns correct string', () {
-      expect(ZenohEncoding.applicationJson.mimeType, equals('application/json'));
+      expect(
+          ZenohEncoding.applicationJson.mimeType, equals('application/json'));
       expect(ZenohEncoding.textPlain.mimeType, equals('text/plain'));
       expect(ZenohEncoding.bytes.mimeType, equals('zenoh/bytes'));
     });
@@ -52,13 +58,17 @@ void main() {
 
   group('ZenohCongestionControl', () {
     test('fromValue returns correct congestion control', () {
-      expect(ZenohCongestionControl.fromValue(0), equals(ZenohCongestionControl.block));
-      expect(ZenohCongestionControl.fromValue(1), equals(ZenohCongestionControl.drop));
-      expect(ZenohCongestionControl.fromValue(2), equals(ZenohCongestionControl.dropFirst));
+      expect(ZenohCongestionControl.fromValue(0),
+          equals(ZenohCongestionControl.block));
+      expect(ZenohCongestionControl.fromValue(1),
+          equals(ZenohCongestionControl.drop));
+      expect(ZenohCongestionControl.fromValue(2),
+          equals(ZenohCongestionControl.dropFirst));
     });
 
     test('fromValue returns drop for unknown value', () {
-      expect(ZenohCongestionControl.fromValue(999), equals(ZenohCongestionControl.drop));
+      expect(ZenohCongestionControl.fromValue(999),
+          equals(ZenohCongestionControl.drop));
     });
   });
 
@@ -215,9 +225,7 @@ void main() {
     });
 
     test('builds config with mode', () {
-      final config = ZenohConfigBuilder()
-          .mode('peer')
-          .build();
+      final config = ZenohConfigBuilder().mode('peer').build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['mode'], equals('peer'));
@@ -225,8 +233,7 @@ void main() {
 
     test('builds config with connect endpoints', () {
       final config = ZenohConfigBuilder()
-          .connect(['tcp/127.0.0.1:7447', 'tcp/192.168.1.1:7447'])
-          .build();
+          .connect(['tcp/127.0.0.1:7447', 'tcp/192.168.1.1:7447']).build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['connect']['endpoints'], contains('tcp/127.0.0.1:7447'));
@@ -234,36 +241,29 @@ void main() {
     });
 
     test('builds config with listen endpoints', () {
-      final config = ZenohConfigBuilder()
-          .listen(['tcp/0.0.0.0:7448'])
-          .build();
+      final config = ZenohConfigBuilder().listen(['tcp/0.0.0.0:7448']).build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['listen']['endpoints'], contains('tcp/0.0.0.0:7448'));
     });
 
     test('builds config with multicast scouting', () {
-      final config = ZenohConfigBuilder()
-          .multicastScouting(false)
-          .build();
+      final config = ZenohConfigBuilder().multicastScouting(false).build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['scouting']['multicast']['enabled'], isFalse);
     });
 
     test('builds config with gossip scouting', () {
-      final config = ZenohConfigBuilder()
-          .gossipScouting(true)
-          .build();
+      final config = ZenohConfigBuilder().gossipScouting(true).build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['scouting']['gossip']['enabled'], isTrue);
     });
 
     test('builds config with custom key', () {
-      final config = ZenohConfigBuilder()
-          .custom('custom_key', 'custom_value')
-          .build();
+      final config =
+          ZenohConfigBuilder().custom('custom_key', 'custom_value').build();
 
       final parsed = jsonDecode(config) as Map;
       expect(parsed['custom_key'], equals('custom_value'));

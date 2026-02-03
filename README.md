@@ -1,5 +1,9 @@
 # zenoh_dart
 
+[![Pub Version](https://img.shields.io/pub/v/zenoh_dart)](https://pub.dev/packages/zenoh_dart)
+[![CI](https://github.com/harunkurtdev/zenoh_dart/actions/workflows/ci.yml/badge.svg)](https://github.com/harunkurtdev/zenoh_dart/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20EPL%202.0-blue.svg)](LICENSE)
+
 A Dart binding for [Zenoh](https://zenoh.io/) - a high-performance, zero-overhead pub/sub, store/query, and compute protocol that unifies data in motion, data at rest, and computations.
 
 `zenoh_dart` enables Dart and Flutter applications to seamlessly integrate with Zenoh's distributed systems capabilities.
