@@ -31,7 +31,7 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildNavButton(context, 'Basic Pub/Sub', const ZenohPubSubPage()),
+          _buildNavButton(context, 'Basic Pub/Sub', const ZenohHomePage()),
           const SizedBox(height: 8),
           _buildNavButton(
               context, 'Multiple Subscribers', const MultipleSubscribersPage()),
