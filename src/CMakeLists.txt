@@ -22,21 +22,18 @@ if(ANDROID)
     set(IS_ANDROID TRUE)
     message(STATUS "Platform: Android")
 # iOS detection MUST come before macOS check
-elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR IOS OR CMAKE_OSX_SYSROOT MATCHES "iphone")
+# Check IOS variable first (set by -DIOS=TRUE), then CMAKE_SYSTEM_NAME, then SYSROOT
+elseif(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS" OR CMAKE_OSX_SYSROOT MATCHES "iphone")
     set(IS_IOS TRUE)
     message(STATUS "Platform: iOS")
+    message(STATUS "iOS Detection - IOS: ${IOS}, CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}, CMAKE_OSX_SYSROOT: ${CMAKE_OSX_SYSROOT}")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(IS_MACOS TRUE)
     message(STATUS "Platform: macOS")
 endif()
 
-
-if(IS_IOS)
-    FetchContent_MakeAvailable(zenohc)
-else()
-    FetchContent_GetProperties(zenohc)
-endif()
-
+# Always use FetchContent_GetProperties and manual Populate for consistency
+FetchContent_GetProperties(zenohc)
 
 # set(NATIVE_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # file(MAKE_DIRECTORY ${NATIVE_OUTPUT_DIR})
