@@ -336,19 +336,25 @@ FFI_PLUGIN_EXPORT ZenohSession *zenoh_open_session(const char *mode,
   z_owned_config_t config;
   z_config_default(&config);
 
+  printf("[zenoh_ffi] open_session: mode='%s', endpoints='%s'\n",
+         mode ? mode : "NULL", endpoints ? endpoints : "NULL");
+
   // Set mode
   if (mode != NULL) {
-    zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
+    int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
+    printf("[zenoh_ffi] set mode '%s' -> rc=%d\n", mode, rc);
   }
 
   // Set endpoints (if provided)
   if (endpoints != NULL && strlen(endpoints) > 0) {
     if (mode != NULL && strstr(mode, "peer") != NULL) {
-      zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_LISTEN_KEY,
+      int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_LISTEN_KEY,
                              endpoints);
+      printf("[zenoh_ffi] set listen endpoints -> rc=%d\n", rc);
     } else {
-      zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_CONNECT_KEY,
+      int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_CONNECT_KEY,
                              endpoints);
+      printf("[zenoh_ffi] set connect endpoints -> rc=%d\n", rc);
     }
   }
 
@@ -359,7 +365,10 @@ FFI_PLUGIN_EXPORT ZenohSession *zenoh_open_session(const char *mode,
 #endif
 
   z_owned_session_t s;
-  if (z_open(&s, z_move(config), NULL) < 0) {
+  printf("[zenoh_ffi] calling z_open...\n");
+  int open_rc = z_open(&s, z_move(config), NULL);
+  printf("[zenoh_ffi] z_open returned %d\n", open_rc);
+  if (open_rc < 0) {
     return NULL;
   }
 
@@ -504,8 +513,10 @@ FFI_PLUGIN_EXPORT int zenoh_publisher_put(ZenohPublisher *publisher,
   z_owned_bytes_t payload;
   z_bytes_copy_from_buf(&payload, data, len);
 
-  return z_publisher_put(z_loan(publisher->publisher), z_move(payload),
+  int rc = z_publisher_put(z_loan(publisher->publisher), z_move(payload),
                          &options);
+  printf("[zenoh_ffi] publisher_put(%zu bytes) -> rc=%d\n", len, rc);
+  return rc;
 }
 
 FFI_PLUGIN_EXPORT int zenoh_publisher_put_with_options(ZenohPublisher *publisher,
@@ -617,6 +628,9 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
       z_drop(z_move(att_string));
     }
   }
+
+  printf("[zenoh_ffi] subscriber_data_handler: key='%s', len=%zu, kind='%s'\n",
+         key, len, kind_str);
 
   // DO NOT FREE - NativeCallable.listener is async, Dart will free these
   sub->callback(key, data, len, kind_str, attachment_str, sub->context);
@@ -777,8 +791,10 @@ FFI_PLUGIN_EXPORT int zenoh_put(ZenohSession *session, const char *key,
     return -1;
 
   z_view_keyexpr_t keyexpr;
-  if (z_view_keyexpr_from_str(&keyexpr, key) < 0)
+  if (z_view_keyexpr_from_str(&keyexpr, key) < 0) {
+    printf("[zenoh_ffi] zenoh_put: invalid keyexpr '%s'\n", key);
     return -1;
+  }
 
   z_put_options_t options;
   z_put_options_default(&options);
@@ -786,8 +802,10 @@ FFI_PLUGIN_EXPORT int zenoh_put(ZenohSession *session, const char *key,
   z_owned_bytes_t payload;
   z_bytes_copy_from_buf(&payload, data, len);
 
-  return z_put(z_loan(session->session), z_loan(keyexpr), z_move(payload),
+  int rc = z_put(z_loan(session->session), z_loan(keyexpr), z_move(payload),
                &options);
+  printf("[zenoh_ffi] zenoh_put('%s', %zu bytes) -> rc=%d\n", key, len, rc);
+  return rc;
 }
 
 FFI_PLUGIN_EXPORT int zenoh_put_with_options(ZenohSession *session,
