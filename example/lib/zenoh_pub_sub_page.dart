@@ -103,23 +103,58 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
                 ],
               )
             else if (_errorMessage != null)
-              Column(
-                children: [
-                  const Icon(Icons.error, color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
-                  Text('Error: $_errorMessage'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isInitializing = true;
-                        _errorMessage = null;
-                      });
-                      _initializeZenoh();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    const Icon(Icons.cloud_off, color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Connection Failed',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$_errorMessage',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade200),
+                      ),
+                      child: const Column(
+                        children: [
+                          Text(
+                            'Make sure a Zenoh router is running:',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(height: 4),
+                          SelectableText(
+                            'zenohd -l tcp/0.0.0.0:7447',
+                            style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _isInitializing = true;
+                          _errorMessage = null;
+                        });
+                        _initializeZenoh();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
               )
             else
               Column(

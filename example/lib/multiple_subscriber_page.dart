@@ -49,7 +49,7 @@ class _MultipleSubscribersPageState extends State<MultipleSubscribersPage> {
       // Initialize Zenoh session
       _session = await ZenohSession.open(mode: 'client', endpoints: [
         'tcp/localhost:7447',
-        'tcp/10.30.221.114:7447',
+        'tcp/10.81.29.92:7447',
         'tcp/127.0.0.1:7447',
         'tcp/10.0.0.2:7447', // android emulator localhost
       ]);

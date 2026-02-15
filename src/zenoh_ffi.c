@@ -339,23 +339,21 @@ FFI_PLUGIN_EXPORT ZenohSession *zenoh_open_session(const char *mode,
   printf("[zenoh_ffi] open_session: mode='%s', endpoints='%s'\n",
          mode ? mode : "NULL", endpoints ? endpoints : "NULL");
 
-  // Set mode
+  // Set mode - must be quoted for JSON5 (e.g. "\"peer\"")
   if (mode != NULL) {
-    int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    printf("[zenoh_ffi] set mode '%s' -> rc=%d\n", mode, rc);
+    char mode_json[64];
+    snprintf(mode_json, sizeof(mode_json), "\"%s\"", mode);
+    int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode_json);
+    printf("[zenoh_ffi] set mode '%s' (json: %s) -> rc=%d\n", mode, mode_json, rc);
   }
 
-  // Set endpoints (if provided)
+  // Set endpoints (if provided) - always use connect key
+  // In peer mode, endpoints are peers to connect TO (not listen on)
+  // Listening is handled separately or via scouting
   if (endpoints != NULL && strlen(endpoints) > 0) {
-    if (mode != NULL && strstr(mode, "peer") != NULL) {
-      int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_LISTEN_KEY,
-                             endpoints);
-      printf("[zenoh_ffi] set listen endpoints -> rc=%d\n", rc);
-    } else {
-      int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_CONNECT_KEY,
-                             endpoints);
-      printf("[zenoh_ffi] set connect endpoints -> rc=%d\n", rc);
-    }
+    int rc = zc_config_insert_json5(z_loan_mut(config), Z_CONFIG_CONNECT_KEY,
+                           endpoints);
+    printf("[zenoh_ffi] set connect endpoints '%s' -> rc=%d\n", endpoints, rc);
   }
 
 // MacOS multicast fix

@@ -1,5 +1,6 @@
 # Build artifacts
 src/build/
+src/build_macos/
 *.o
 *.so
 *.dylib

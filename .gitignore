@@ -10,6 +10,10 @@
 .svn/
 migrate_working_dir/
 
+src/build_macos/
+
+src/build/
+
 .claude
 
 # IntelliJ related
