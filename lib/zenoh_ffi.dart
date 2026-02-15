@@ -27,7 +27,10 @@ const String _libName = 'zenoh_ffi';
 
 /// The dynamic library in which the symbols for [ZenohDartBindings] can be found.
 final DynamicLibrary _dylib = () {
-  if (Platform.isMacOS || Platform.isIOS) {
+  if (Platform.isIOS) {
+    return DynamicLibrary.process();
+  }
+  if (Platform.isMacOS) {
     return DynamicLibrary.open('$_libName.framework/$_libName');
   }
   if (Platform.isAndroid || Platform.isLinux) {

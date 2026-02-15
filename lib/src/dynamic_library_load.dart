@@ -11,7 +11,9 @@ class DynamicLibraryLoader {
     return _instance;
   }
   DynamicLibraryLoader._internal() {
-    if (Platform.isMacOS || Platform.isIOS) {
+    if (Platform.isIOS) {
+      library = DynamicLibrary.process();
+    } else if (Platform.isMacOS) {
       library = DynamicLibrary.open('$_libName.framework/$_libName');
     } else if (Platform.isAndroid || Platform.isLinux) {
       library = DynamicLibrary.open('lib$_libName.so');

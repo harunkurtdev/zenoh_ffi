@@ -19,23 +19,45 @@ query/reply, and distributed computing.
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
   s.swift_version = '5.0'
+  s.static_framework = true
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
     'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build/_deps/zenohc-src/include"',
-    'LIBRARY_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build"',
-    'OTHER_LDFLAGS' => '$(inherited) -lzenohc -lzenoh_ffi'
   }
 
-  # Build zenoh-c via CMake during pod install (runs OUTSIDE Xcode environment)
+  # Use -force_load to ensure ALL C symbols from static archives are included.
+  # Plain -l flags would let the linker dead-strip unreferenced symbols, but
+  # Dart FFI uses dlsym at runtime so all symbols must be present.
+  s.user_target_xcconfig = {
+    'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "${PODS_ROOT}/../.symlinks/plugins/zenoh_ffi/ios/../src/build/device_libs/libzenohc.a" -force_load "${PODS_ROOT}/../.symlinks/plugins/zenoh_ffi/ios/../src/build/device_libs/libzenoh_ffi.a"',
+    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "${PODS_ROOT}/../.symlinks/plugins/zenoh_ffi/ios/../src/build/sim_libs/libzenohc.a" -force_load "${PODS_ROOT}/../.symlinks/plugins/zenoh_ffi/ios/../src/build/sim_libs/libzenoh_ffi.a"',
+  }
+
+  s.preserve_paths = [
+    '../src/build/**/*',
+    '../src/build/_deps/zenohc-src/include/**/*'
+  ]
+
+  s.public_header_files = [
+    'Classes/**/*.h'
+  ]
+
+  # Build zenoh-c via cargo during pod install (runs OUTSIDE Xcode environment).
+  # Builds for BOTH device (aarch64-apple-ios) and simulator (aarch64-apple-ios-sim).
+  # Libraries are placed in separate dirs (device_libs/ sim_libs/) since both are
+  # arm64 and cannot be combined with lipo.
   s.prepare_command = <<-CMD
     set -e
     echo "================================================"
-    echo "Building zenoh-c via CMake for iOS..."
+    echo "Building zenoh-c for iOS (device + simulator)..."
     echo "================================================"
 
     export PATH="$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export AR=/usr/bin/ar
 
     if ! command -v cargo &> /dev/null; then
       echo "Error: cargo not found!"
@@ -46,14 +68,8 @@ query/reply, and distributed computing.
     echo "Found cargo: $(which cargo)"
     echo "Rust version: $(rustc --version)"
 
-    # Determine target
-    ARCH="arm64"
-    SDK="iphoneos"
-    RUST_TARGET="aarch64-apple-ios"
-
-    echo "Installing Rust target: ${RUST_TARGET}..."
-    rustup target add ${RUST_TARGET} 2>/dev/null || true
-    # Also add simulator target
+    # Install both Rust targets
+    rustup target add aarch64-apple-ios 2>/dev/null || true
     rustup target add aarch64-apple-ios-sim 2>/dev/null || true
 
     PLUGIN_ROOT="$(cd .. && pwd)"
@@ -65,41 +81,58 @@ query/reply, and distributed computing.
     fi
 
     cd "${SRC_DIR}"
+
+    # Skip rebuild if libraries already exist
+    if [ -f "build/device_libs/libzenohc.a" ] && [ -f "build/sim_libs/libzenohc.a" ] && \
+       [ -f "build/device_libs/libzenoh_ffi.a" ] && [ -f "build/sim_libs/libzenoh_ffi.a" ]; then
+      echo "================================================"
+      echo "Libraries already built, skipping rebuild."
+      echo "Delete src/build to force rebuild."
+      echo "================================================"
+      ls -lh build/device_libs/*.a build/sim_libs/*.a
+      exit 0
+    fi
+
+    # Force remove previous build (cargo target dirs may have restricted perms)
+    chmod -R u+w build 2>/dev/null || true
     rm -rf build
     mkdir -p build
     cd build
 
-    export SDKROOT=$(xcrun --sdk ${SDK} --show-sdk-path)
-    echo "Building for SDK: ${SDK}, Arch: ${ARCH}, Rust target: ${RUST_TARGET}"
+    DEVICE_SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+    SIM_SDK=$(xcrun --sdk iphonesimulator --show-sdk-path)
 
-    # Configure via CMake (this will FetchContent zenoh-c)
+    # ================================================================
+    # Step 1: Use CMake configure ONLY to fetch zenoh-c via FetchContent
+    # ================================================================
+    echo "Configuring CMake (FetchContent only)..."
+
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_SYSTEM_NAME=iOS \
-      -DCMAKE_OSX_ARCHITECTURES=${ARCH} \
-      -DCMAKE_OSX_SYSROOT=${SDKROOT} \
+      -DCMAKE_OSX_ARCHITECTURES=arm64 \
+      -DCMAKE_OSX_SYSROOT=${DEVICE_SDK} \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
       -DIOS=TRUE
 
-    # ================================================================
-    # PATCH: zenoh-c 1.6.2 iOS support
-    # zenoh-util has cfg gates for set_bind_to_device_{tcp,udp}_socket
-    # that cover linux/android/macos/windows but NOT ios.
-    # We fetch deps first, then patch the source in cargo's git cache.
-    # ================================================================
-    echo "================================================"
-    echo "Patching zenoh-util for iOS support..."
-    echo "================================================"
-
-    ZENOHC_SRC_DIR=$(find _deps -name "zenohc-src" -type d 2>/dev/null | head -1)
-    if [ -n "$ZENOHC_SRC_DIR" ]; then
-      cd "$ZENOHC_SRC_DIR"
-      # Fetch all cargo dependencies so source is available
-      cargo fetch --target ${RUST_TARGET} 2>&1 || true
-      cd - > /dev/null
+    ZENOHC_SRC_DIR="$(pwd)/_deps/zenohc-src"
+    if [ ! -d "$ZENOHC_SRC_DIR" ]; then
+      echo "Error: zenohc-src not found after cmake configure!"
+      exit 1
     fi
+    echo "zenoh-c source: $ZENOHC_SRC_DIR"
 
-    # Patch all zenoh-util/src/net/mod.rs files in cargo's git checkout cache
+    # ================================================================
+    # Step 2: Fetch cargo deps & patch zenoh-c 1.6.2 for iOS
+    # ================================================================
+    echo "================================================"
+    echo "Fetching cargo deps and patching for iOS..."
+    echo "================================================"
+
+    cd "$ZENOHC_SRC_DIR"
+    cargo fetch --target aarch64-apple-ios 2>&1 || true
+    cd - > /dev/null
+
     PATCHED=0
     for MOD_RS in $(find "$HOME/.cargo/git/checkouts" -path "*/zenoh-util/src/net/mod.rs" 2>/dev/null); do
       if grep -q 'target_os = "macos", target_os = "windows")' "$MOD_RS" && ! grep -q 'target_os = "ios"' "$MOD_RS"; then
@@ -110,50 +143,97 @@ query/reply, and distributed computing.
     done
     echo "Patched $PATCHED file(s) for iOS support"
 
-    # Now build (the patched source will be used)
+    # ================================================================
+    # Step 3: Build zenohc for device (aarch64-apple-ios)
+    # ================================================================
     echo "================================================"
-    echo "Building with CMake..."
+    echo "Building zenohc for DEVICE (aarch64-apple-ios)..."
     echo "================================================"
-    cmake --build . --config Release
+    echo "Free disk space: $(df -h / | tail -1 | awk '{print $4}')"
 
-    # Copy libzenohc.a to build root
-    ZENOHC_LIB=$(find _deps/zenohc-src/target -name "libzenohc.a" -path "*/${RUST_TARGET}/release/*" 2>/dev/null | head -1)
-    if [ -n "$ZENOHC_LIB" ]; then
-      cp "$ZENOHC_LIB" "$(pwd)/libzenohc.a"
-      echo "Copied libzenohc.a to build root"
+    cd "$ZENOHC_SRC_DIR"
+    SDKROOT="$DEVICE_SDK" IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+      cargo build --release --target aarch64-apple-ios --lib
+    cd - > /dev/null
+
+    mkdir -p device_libs
+    DEVICE_ZENOHC="$ZENOHC_SRC_DIR/target/aarch64-apple-ios/release/libzenohc.a"
+    if [ -f "$DEVICE_ZENOHC" ]; then
+      cp "$DEVICE_ZENOHC" device_libs/libzenohc.a
+      echo "Device libzenohc.a ready"
     else
-      echo "WARNING: libzenohc.a not found for ${RUST_TARGET}"
-      find _deps/zenohc-src/target -name "libzenohc.a" 2>/dev/null || true
+      echo "ERROR: Device libzenohc.a not found!"
+      find "$ZENOHC_SRC_DIR/target" -name "libzenohc.a" 2>/dev/null || true
+      exit 1
     fi
 
-    # Also copy libzenoh_ffi.a if it's not already in build root
-    if [ -f "libzenoh_ffi.a" ]; then
-      echo "libzenoh_ffi.a already in build root"
+    # Build zenoh_ffi.c for device
+    echo "Building zenoh_ffi.c for device..."
+    /usr/bin/clang -c \
+      -target arm64-apple-ios13.0 \
+      -isysroot "$DEVICE_SDK" \
+      -I"$ZENOHC_SRC_DIR/include" \
+      -I"${SRC_DIR}" \
+      -DDART_SHARED_LIB \
+      -O2 \
+      -o device_libs/zenoh_ffi.o \
+      "${SRC_DIR}/zenoh_ffi.c"
+    /usr/bin/ar rcs device_libs/libzenoh_ffi.a device_libs/zenoh_ffi.o
+    echo "Device libzenoh_ffi.a ready"
+
+    # Clean device build intermediates to free disk space
+    echo "Cleaning device build intermediates..."
+    rm -rf "$ZENOHC_SRC_DIR/target/aarch64-apple-ios"
+    rm -rf "$ZENOHC_SRC_DIR/target/release"
+    echo "Free disk space: $(df -h / | tail -1 | awk '{print $4}')"
+
+    # ================================================================
+    # Step 4: Build zenohc for simulator (aarch64-apple-ios-sim)
+    # ================================================================
+    echo "================================================"
+    echo "Building zenohc for SIMULATOR (aarch64-apple-ios-sim)..."
+    echo "================================================"
+
+    cd "$ZENOHC_SRC_DIR"
+    SDKROOT="$SIM_SDK" IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+      cargo build --release --target aarch64-apple-ios-sim --lib
+    cd - > /dev/null
+
+    mkdir -p sim_libs
+    SIM_ZENOHC="$ZENOHC_SRC_DIR/target/aarch64-apple-ios-sim/release/libzenohc.a"
+    if [ -f "$SIM_ZENOHC" ]; then
+      cp "$SIM_ZENOHC" sim_libs/libzenohc.a
+      echo "Simulator libzenohc.a ready"
     else
-      FFI_LIB=$(find . -name "libzenoh_ffi.a" -not -path "./libzenoh_ffi.a" 2>/dev/null | head -1)
-      if [ -n "$FFI_LIB" ]; then
-        cp "$FFI_LIB" "$(pwd)/libzenoh_ffi.a"
-        echo "Copied libzenoh_ffi.a to build root"
-      fi
+      echo "ERROR: Simulator libzenohc.a not found!"
+      find "$ZENOHC_SRC_DIR/target" -name "libzenohc.a" 2>/dev/null || true
+      exit 1
     fi
+
+    # Build zenoh_ffi.c for simulator
+    echo "Building zenoh_ffi.c for simulator..."
+    /usr/bin/clang -c \
+      -target arm64-apple-ios13.0-simulator \
+      -isysroot "$SIM_SDK" \
+      -I"$ZENOHC_SRC_DIR/include" \
+      -I"${SRC_DIR}" \
+      -DDART_SHARED_LIB \
+      -O2 \
+      -o sim_libs/zenoh_ffi.o \
+      "${SRC_DIR}/zenoh_ffi.c"
+    /usr/bin/ar rcs sim_libs/libzenoh_ffi.a sim_libs/zenoh_ffi.o
+    echo "Simulator libzenoh_ffi.a ready"
+
+    # Clean all build intermediates
+    echo "Cleaning build intermediates..."
+    rm -rf "$ZENOHC_SRC_DIR/target"
 
     echo "================================================"
     echo "Build artifacts:"
-    ls -lh *.a 2>/dev/null || echo "No .a files found"
+    echo "Device:"
+    ls -lh device_libs/*.a 2>/dev/null || echo "  No device .a files"
+    echo "Simulator:"
+    ls -lh sim_libs/*.a 2>/dev/null || echo "  No simulator .a files"
     echo "================================================"
   CMD
-
-  s.preserve_paths = [
-    '../src/build/**/*',
-    '../src/build/_deps/zenohc-src/include/**/*'
-  ]
-
-  s.vendored_libraries = [
-    '../src/build/libzenoh_ffi.a',
-    '../src/build/libzenohc.a'
-  ]
-
-  s.public_header_files = [
-    'Classes/**/*.h'
-  ]
 end

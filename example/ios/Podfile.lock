@@ -15,7 +15,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  zenoh_ffi: ce7064b8ae38bb816150de9ac01dddd31ec9e523
+  zenoh_ffi: c6b2ce465cb05bbd9848be24a718e44bbc8e319a
 
 PODFILE CHECKSUM: 251cb053df7158f337c0712f2ab29f4e0fa474ce
 
