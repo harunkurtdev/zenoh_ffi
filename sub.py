@@ -11,7 +11,7 @@ def listener(sample):
 if __name__ == "__main__":
 
     config = zenoh.Config()
-    config.insert_json5("connect/endpoints", '["tcp/localhost:7450"]')
+    config.insert_json5("connect/endpoints", '["tcp/localhost:7447"]')
     with zenoh.open(config) as session:
 
         sub = session.declare_subscriber('**', listener)

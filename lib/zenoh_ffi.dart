@@ -1015,21 +1015,37 @@ class ZenohSession {
     Pointer<Char> attachment,
     Pointer<Void> context,
   ) {
-    int id = context.address;
-    if (_subscribers.containsKey(id)) {
-      final keyStr = key.cast<Utf8>().toDartString();
-      final kindStr = kind.cast<Utf8>().toDartString();
-      final payload = Uint8List.fromList(value.asTypedList(len));
-      final attStr = attachment.cast<Utf8>().toDartString();
+    try {
+      int id = context.address;
+      if (_subscribers.containsKey(id)) {
+        final keyStr = key.cast<Utf8>().toDartString();
+        final kindStr = kind.cast<Utf8>().toDartString();
+        final payload = len > 0 && value.address != 0
+            ? Uint8List.fromList(value.asTypedList(len))
+            : Uint8List(0);
+        final attStr = attachment.address != 0
+            ? attachment.cast<Utf8>().toDartString()
+            : '';
 
-      _subscribers[id]?.add(ZenohSample(
-        key: keyStr,
-        payload: payload,
-        kind:
-            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
-        attachment:
-            attStr.isNotEmpty ? Uint8List.fromList(utf8.encode(attStr)) : null,
-      ));
+        _subscribers[id]?.add(ZenohSample(
+          key: keyStr,
+          payload: payload,
+          kind: kindStr == 'DELETE'
+              ? ZenohSampleKind.delete
+              : ZenohSampleKind.put,
+          attachment: attStr.isNotEmpty
+              ? Uint8List.fromList(utf8.encode(attStr))
+              : null,
+        ));
+      }
+    } catch (e) {
+      print('Error in subscriber callback: $e');
+    } finally {
+      // Free native memory allocated by C side
+      malloc.free(key);
+      malloc.free(kind);
+      if (attachment.address != 0) malloc.free(attachment);
+      if (value.address != 0 && len > 0) malloc.free(value);
     }
   }
 
@@ -1040,18 +1056,27 @@ class ZenohSession {
     Pointer<Char> kind,
     Pointer<Void> context,
   ) {
-    int id = context.address;
-    if (_queries.containsKey(id)) {
-      final keyStr = key.cast<Utf8>().toDartString();
-      final kindStr = kind.cast<Utf8>().toDartString();
-      final payload = Uint8List.fromList(value.asTypedList(len));
+    try {
+      int id = context.address;
+      if (_queries.containsKey(id)) {
+        final keyStr = key.cast<Utf8>().toDartString();
+        final kindStr = kind.cast<Utf8>().toDartString();
+        final payload = len > 0 && value.address != 0
+            ? Uint8List.fromList(value.asTypedList(len))
+            : Uint8List(0);
 
-      _queries[id]?.add(ZenohReply(
-        key: keyStr,
-        payload: payload,
-        kind:
-            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
-      ));
+        _queries[id]?.add(ZenohReply(
+          key: keyStr,
+          payload: payload,
+          kind:
+              kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
+        ));
+      }
+    } finally {
+      // Free native memory allocated by C side
+      malloc.free(key);
+      malloc.free(kind);
+      if (value.address != 0 && len > 0) malloc.free(value);
     }
   }
 
@@ -1076,23 +1101,31 @@ class ZenohSession {
     Pointer<Void> replyContext,
     Pointer<Void> userContext,
   ) {
-    int id = userContext.address;
-    if (_queryables.containsKey(id)) {
-      final keyStr = key.cast<Utf8>().toDartString();
-      final selectorStr = selector.cast<Utf8>().toDartString();
-      final kindStr = kind.cast<Utf8>().toDartString();
-      final payload =
-          len > 0 ? Uint8List.fromList(value.asTypedList(len)) : null;
+    try {
+      int id = userContext.address;
+      if (_queryables.containsKey(id)) {
+        final keyStr = key.cast<Utf8>().toDartString();
+        final selectorStr = selector.cast<Utf8>().toDartString();
+        final kindStr = kind.cast<Utf8>().toDartString();
+        final payload =
+            len > 0 && value.address != 0 ? Uint8List.fromList(value.asTypedList(len)) : null;
 
-      final query = ZenohQuery(
-        key: keyStr,
-        selector: selectorStr,
-        value: payload,
-        kind:
-            kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
-        replyContext: replyContext,
-      );
-      _queryables[id]?.call(query);
+        final query = ZenohQuery(
+          key: keyStr,
+          selector: selectorStr,
+          value: payload,
+          kind:
+              kindStr == 'DELETE' ? ZenohSampleKind.delete : ZenohSampleKind.put,
+          replyContext: replyContext,
+        );
+        _queryables[id]?.call(query);
+      }
+    } finally {
+      // Free native memory allocated by C side
+      malloc.free(key);
+      malloc.free(selector);
+      malloc.free(kind);
+      if (value.address != 0 && len > 0) malloc.free(value);
     }
   }
 
@@ -1101,11 +1134,16 @@ class ZenohSession {
     int isAlive,
     Pointer<Void> context,
   ) {
-    int id = context.address;
-    if (_livelinessSubscribers.containsKey(id)) {
-      final keyStr = key.cast<Utf8>().toDartString();
-      _livelinessSubscribers[id]
-          ?.add(ZenohLivelinessEvent(keyStr, isAlive != 0));
+    try {
+      int id = context.address;
+      if (_livelinessSubscribers.containsKey(id)) {
+        final keyStr = key.cast<Utf8>().toDartString();
+        _livelinessSubscribers[id]
+            ?.add(ZenohLivelinessEvent(keyStr, isAlive != 0));
+      }
+    } finally {
+      // Free native memory allocated by C side
+      malloc.free(key);
     }
   }
 }

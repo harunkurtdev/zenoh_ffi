@@ -566,7 +566,7 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
   if (sub == NULL || sub->callback == NULL)
     return;
 
-  // Get Key - null-terminated copy like old working code (f457774)
+  // Get Key - null-terminated heap copy (Dart will free via zenoh_free_string)
   z_view_string_t key_str;
   z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
   size_t key_len = z_string_len(z_loan(key_str));
@@ -575,17 +575,19 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
   memcpy(key, z_string_data(z_loan(key_str)), key_len);
   key[key_len] = '\0';
 
-  // Get Kind
-  const char *kind_str = "PUT";
+  // Get Kind - heap copy (Dart will free)
   z_sample_kind_t kind = z_sample_kind(sample);
-  if (kind == Z_SAMPLE_KIND_DELETE)
-    kind_str = "DELETE";
+  const char *kind_literal = (kind == Z_SAMPLE_KIND_DELETE) ? "DELETE" : "PUT";
+  size_t kind_len = strlen(kind_literal);
+  char *kind_str = (char *)malloc(kind_len + 1);
+  if (kind_str == NULL) { free(key); return; }
+  memcpy(kind_str, kind_literal, kind_len + 1);
 
-  // Get Payload - use z_bytes_to_string like old working code (f457774)
+  // Get Payload - heap copy (Dart will free)
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
-  z_owned_string_t payload_string;
   size_t len = 0;
   uint8_t *data = NULL;
+  z_owned_string_t payload_string;
   if (z_bytes_to_string(payload, &payload_string) == 0) {
     len = z_string_len(z_loan(payload_string));
     data = (uint8_t *)malloc(len);
@@ -594,27 +596,30 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
     }
     z_drop(z_move(payload_string));
   } else {
-    // Fallback: use reader for binary data
     data = get_bytes_data(payload, &len);
   }
 
-  // Get Attachment
+  // Get Attachment - heap copy (Dart will free)
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
-  char attachment_str[256] = "";
+  char *attachment_str = (char *)malloc(1);
+  if (attachment_str == NULL) { free(key); free(kind_str); free(data); return; }
+  attachment_str[0] = '\0';
   if (attachment_bytes != NULL && z_bytes_len(attachment_bytes) > 0) {
     z_owned_string_t att_string;
     if (z_bytes_to_string(attachment_bytes, &att_string) == 0) {
       size_t att_len = z_string_len(z_loan(att_string));
-      size_t copy_len = att_len < 255 ? att_len : 255;
-      memcpy(attachment_str, z_string_data(z_loan(att_string)), copy_len);
-      attachment_str[copy_len] = '\0';
+      free(attachment_str);
+      attachment_str = (char *)malloc(att_len + 1);
+      if (attachment_str != NULL) {
+        memcpy(attachment_str, z_string_data(z_loan(att_string)), att_len);
+        attachment_str[att_len] = '\0';
+      }
       z_drop(z_move(att_string));
     }
   }
 
+  // DO NOT FREE - NativeCallable.listener is async, Dart will free these
   sub->callback(key, data, len, kind_str, attachment_str, sub->context);
-  free(key);
-  free(data);
 }
 
 static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
@@ -623,7 +628,7 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   if (sub == NULL || sub->callback_ex == NULL)
     return;
 
-  // Get Key - null-terminated copy
+  // Get Key - heap copy (Dart will free)
   z_view_string_t key_str;
   z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
   size_t key_len = z_string_len(z_loan(key_str));
@@ -639,7 +644,7 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   int priority = (int)z_sample_priority(sample);
   int congestion = (int)z_sample_congestion_control(sample);
 
-  // Get Encoding - null-terminated copy
+  // Get Encoding - heap copy (Dart will free)
   const z_loaned_encoding_t *enc = z_sample_encoding(sample);
   z_owned_string_t enc_str;
   z_encoding_to_string(enc, &enc_str);
@@ -650,7 +655,7 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   encoding[enc_len] = '\0';
   z_drop(z_move(enc_str));
 
-  // Get Payload
+  // Get Payload - heap copy (Dart will free)
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
   z_owned_string_t payload_string;
   size_t len = 0;
@@ -666,7 +671,7 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
     data = get_bytes_data(payload, &len);
   }
 
-  // Get Attachment
+  // Get Attachment - heap copy (Dart will free)
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
   size_t attachment_len = 0;
   uint8_t *attachment = get_bytes_data(attachment_bytes, &attachment_len);
@@ -674,13 +679,9 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   // Get Timestamp (simplified - just use 0 for now)
   uint64_t timestamp = 0;
 
+  // DO NOT FREE - NativeCallable.listener is async, Dart will free these
   sub->callback_ex(key, data, len, sample_kind, priority, congestion, encoding,
                    attachment, attachment_len, timestamp, sub->context);
-
-  free(key);
-  free(encoding);
-  free(data);
-  free(attachment);
 }
 
 static void drop_subscriber_wrapper(void *arg) {
@@ -879,14 +880,15 @@ static void get_reply_handler(struct z_loaned_reply_t *reply, void *arg) {
       data = get_bytes_data(payload, &len);
     }
 
-    // Kind
-    const char *kind_str = "PUT";
-    if (z_sample_kind(sample) == Z_SAMPLE_KIND_DELETE)
-      kind_str = "DELETE";
+    // Kind - heap copy (Dart will free)
+    const char *kind_literal = (z_sample_kind(sample) == Z_SAMPLE_KIND_DELETE) ? "DELETE" : "PUT";
+    size_t kind_len = strlen(kind_literal);
+    char *kind_str = (char *)malloc(kind_len + 1);
+    if (kind_str == NULL) { free(key); free(data); return; }
+    memcpy(kind_str, kind_literal, kind_len + 1);
 
+    // DO NOT FREE - NativeCallable.listener is async, Dart will free these
     ctx->callback(key, data, len, kind_str, ctx->user_context);
-    free(key);
-    free(data);
   }
 }
 
@@ -1002,10 +1004,14 @@ static void query_handler(z_loaned_query_t *query, void *arg) {
 
   const char *kind = "GET";
 
-  q->callback(key, selector, data, len, kind, (void *)query, q->context);
-  free(key);
-  free(selector);
-  free(data);
+  // Kind - heap copy (Dart will free)
+  size_t kind_len = strlen(kind);
+  char *kind_copy = (char *)malloc(kind_len + 1);
+  if (kind_copy == NULL) { free(key); free(selector); free(data); return; }
+  memcpy(kind_copy, kind, kind_len + 1);
+
+  // DO NOT FREE - NativeCallable.listener is async, Dart will free these
+  q->callback(key, selector, data, len, kind_copy, (void *)query, q->context);
 }
 
 static void drop_queryable_wrapper(void *arg) {
@@ -1160,8 +1166,8 @@ static void liveliness_sample_handler(z_loaned_sample_t *sample,
   // Get alive status from sample kind
   int is_alive = (z_sample_kind(sample) == Z_SAMPLE_KIND_PUT) ? 1 : 0;
 
+  // DO NOT FREE key - NativeCallable.listener is async, Dart will free
   sub->liveliness_callback(key, is_alive, sub->context);
-  free(key);
 }
 
 FFI_PLUGIN_EXPORT ZenohSubscriber *zenoh_declare_liveliness_subscriber(
@@ -1224,9 +1230,8 @@ static void liveliness_get_reply_handler(struct z_loaned_reply_t *reply, void *a
     memcpy(key, z_string_data(z_loan(key_str)), key_len);
     key[key_len] = '\0';
 
-    // Liveliness get returns currently alive tokens
+    // DO NOT FREE key - NativeCallable.listener is async, Dart will free
     ctx->callback(key, 1, ctx->user_context);
-    free(key);
   }
 }
 
