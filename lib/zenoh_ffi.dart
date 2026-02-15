@@ -226,11 +226,11 @@ class ZenohSample {
   });
 
   /// Get payload as UTF-8 string
-  String get payloadString => utf8.decode(payload);
+  String get payloadString => utf8.decode(payload, allowMalformed: true);
 
   /// Get attachment as UTF-8 string (if available)
   String? get attachmentString =>
-      attachment != null ? utf8.decode(attachment!) : null;
+      attachment != null ? utf8.decode(attachment!, allowMalformed: true) : null;
 
   @override
   String toString() =>
@@ -254,11 +254,11 @@ class ZenohReply {
   });
 
   /// Get payload as UTF-8 string
-  String get payloadString => utf8.decode(payload);
+  String get payloadString => utf8.decode(payload, allowMalformed: true);
 
   /// Get attachment as UTF-8 string (if available)
   String? get attachmentString =>
-      attachment != null ? utf8.decode(attachment!) : null;
+      attachment != null ? utf8.decode(attachment!, allowMalformed: true) : null;
 
   @override
   String toString() =>

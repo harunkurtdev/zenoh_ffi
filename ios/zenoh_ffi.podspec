@@ -4,160 +4,116 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'zenoh_ffi'
-  s.version          = '0.0.1'
-  s.summary          = 'A new Flutter FFI plugin project.'
+  s.version          = '0.1.0'
+  s.summary          = 'Dart FFI binding for Zenoh protocol.'
   s.description      = <<-DESC
-A new Flutter FFI plugin project.
+A Dart/Flutter FFI binding for Zenoh protocol enabling high-performance pub/sub,
+query/reply, and distributed computing.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/harunkurtdev/zenoh_ffi'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'Harun Kurt' => 'harunkurtdev@example.com' }
 
-  # This will ensure the source files in Classes/ are included in the native
-  # builds of apps using this FFI plugin. Podspec does not support relative
-  # paths, so Classes contains a forwarder C file that relatively imports
-  # `../src/*` so that the C sources can be shared among all target platforms.
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files     = 'Classes/**/*', '../src/zenoh_ffi.c', '../src/zenoh_ffi.h'
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
-
-  # Flutter.framework does not contain a i386 slice.
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build/_deps/zenohc-src/include"',
-    'LIBRARY_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/build"',
-    'OTHER_LDFLAGS' => '$(inherited) -lzenohc -lzenoh_ffi'
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 x86_64',
+    'VALID_ARCHS' => 'arm64',
+    'HEADER_SEARCH_PATHS' => '$(inherited) "${PODS_TARGET_SRCROOT}/../src/include"',
+    'OTHER_LDFLAGS' => '$(inherited) -framework Foundation -framework Security -framework SystemConfiguration -lresolv'
   }
-  
-  # CMake build için prepare_command
-    s.prepare_command = <<-CMD
-    set -e
-    echo "================================================"
-    echo "Building zenoh-c via CMake for iOS..."
-    echo "Current directory: $(pwd)"
-    echo "================================================"
-    
-    export PATH="$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
-    
-    if ! command -v cargo &> /dev/null; then
-      echo "❌ Error: cargo not found!"
-      echo "Please install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-      exit 1
-    fi
-    
-    echo "✓ Found cargo: $(which cargo)"
-    echo "✓ Rust version: $(rustc --version)"
-    # Determine architecture and SDK first to know which Rust target to install
-  ARCH="arm64"
-  SDK="iphoneos"
-  RUST_TARGET="aarch64-apple-ios"
-  
-  if [ "${CONFIGURATION}" = "Debug" ] || [ "${SDKROOT}" = "$(xcrun --sdk iphonesimulator --show-sdk-path)" ]; then
-    SDK="iphonesimulator"
-    if [ "$(uname -m)" = "x86_64" ]; then
-      ARCH="x86_64"
-      RUST_TARGET="x86_64-apple-ios"
-    else
-      ARCH="arm64"
-      RUST_TARGET="aarch64-apple-ios-sim"
-    fi
-  fi
-  
-  # Install required Rust targets and toolchains
-  echo "Installing Rust target: ${RUST_TARGET}..."
-  if [ "${RUST_TARGET}" = "aarch64-apple-ios-sim" ]; then
-    rustup toolchain install nightly 2>/dev/null || true
-    rustup +nightly target list --installed | grep ${RUST_TARGET} || rustup +nightly target add ${RUST_TARGET} 2>/dev/null
-  else
-    rustup toolchain install stable 2>/dev/null || true
-    rustup default stable
-    rustup target list --installed | grep ${RUST_TARGET} || rustup target add ${RUST_TARGET} 2>/dev/null
-  fi
-  echo "✓ Rust target installed"
-  
-  PLUGIN_ROOT="$(cd .. && pwd)"
-  SRC_DIR="${PLUGIN_ROOT}/src"
-  
-  echo "Plugin root: ${PLUGIN_ROOT}"
-  echo "Source dir: ${SRC_DIR}"
-  
-  if [ ! -d "${SRC_DIR}" ]; then
-    echo "❌ Error: ${SRC_DIR} not found!"
-    echo "Available directories in ${PLUGIN_ROOT}:"
-    ls -la "${PLUGIN_ROOT}"
-    exit 1
-  fi
-  
-  cd "${SRC_DIR}"
-  echo "Working in: $(pwd)"
-  
-  # Clean any previous builds
-  rm -rf build
-  mkdir -p build
-  cd build
-  
-  export SDKROOT=$(xcrun --sdk ${SDK} --show-sdk-path)
-  echo "Building for SDK: ${SDK}, Arch: ${ARCH}, Rust target: ${RUST_TARGET}"
-  
-  cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_SYSTEM_NAME=iOS \
-    -DCMAKE_OSX_ARCHITECTURES=${ARCH} \
-    -DCMAKE_OSX_SYSROOT=${SDKROOT} \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
-    -DIOS=TRUE
 
-    # Build
-    echo "Running CMake build..."
-    cmake --build . --config Release
-    
-    echo "================================================"
-    echo "✓ zenoh-c built successfully!"
-    echo "Build artifacts:"
-    ls -lh *.a 2>/dev/null || echo "No .a files found"
-    echo "================================================"
-  CMD
+  s.user_target_xcconfig = {
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 x86_64'
+  }
 
-  # App bundle'a kopyalama script phase --- IGNORE ---
-  # TODO: fix codesign issues on iphoneos Ventura and later
-  # s.script_phases = [
-  #     {
-  #       :name => 'Copy Zenoh Libraries to App Bundle',
-  #               :script => 'set -e
-  #         FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
-  #         mkdir -p "${FRAMEWORKS_DIR}"
-  #         cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenoh_ffi.dylib" "${FRAMEWORKS_DIR}/"
-  #         cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenohc.dylib" "${FRAMEWORKS_DIR}/"
-  #         # cp -R "${PODS_TARGET_SRCROOT}/../src/build/zenoh_ffi.framework" "${FRAMEWORKS_DIR}/"
-  #         codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenoh_ffi.dylib" || true
-  #         codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenohc.dylib" || true
-  #         # codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/zenoh_ffi.framework" || true
-  #         ',
-  #       :execution_position => :after_compile
-  #     }
-  #   ]
+  # Static library olarak build et
+  s.static_framework = true
 
-
-  # Preserve paths - CMake build ürünlerini koru
-  s.preserve_paths = [
-    '../src/build/**/*',
-    '../src/build/_deps/zenohc-src/include/**/*',
-    '../src/_deps/**/*'
-  ]
-  
-  # Vendored libraries
-  s.vendored_libraries = [
-  '../src/build/libzenoh_ffi.a',  
-  '../src/build/libzenohc.a'      
-]
-
-  s.vendored_frameworks = '../src/build/zenoh_ffi.framework'
-  
   s.public_header_files = [
-    'Classes/**/*.h'
+    '../src/zenoh_ffi.h'
+  ]
+
+  # Script phase ile zenoh-c'yi build et
+  s.script_phases = [
+    {
+      :name => 'Build Zenoh-C',
+      :script => %q{
+        set -ex
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export PATH="$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+
+        SRC_DIR="${PODS_TARGET_SRCROOT}/../src"
+        BUILD_DIR="${SRC_DIR}/build"
+
+        # Skip if already built for this target
+        RUST_TARGET_FILE="${BUILD_DIR}/.rust_target"
+
+        # Determine target
+        if [[ "$PLATFORM_NAME" == *"simulator"* ]]; then
+          if [[ "$ARCHS" == *"arm64"* ]]; then
+            RUST_TARGET="aarch64-apple-ios-sim"
+          else
+            RUST_TARGET="x86_64-apple-ios"
+          fi
+        else
+          RUST_TARGET="aarch64-apple-ios"
+        fi
+
+        echo "Building for RUST_TARGET: $RUST_TARGET"
+        echo "PLATFORM_NAME: $PLATFORM_NAME"
+        echo "ARCHS: $ARCHS"
+        echo "SDKROOT: $SDKROOT"
+
+        # Check if already built for same target
+        if [ -f "${BUILD_DIR}/libzenoh_ffi.a" ] && [ -f "$RUST_TARGET_FILE" ]; then
+          PREV_TARGET=$(cat "$RUST_TARGET_FILE")
+          if [ "$PREV_TARGET" = "$RUST_TARGET" ]; then
+            echo "Libraries already built for $RUST_TARGET, skipping..."
+            exit 0
+          fi
+        fi
+
+        # Clean previous build
+        rm -rf "$BUILD_DIR"
+        mkdir -p "$BUILD_DIR"
+
+        # Install target
+        rustup target add $RUST_TARGET || true
+
+        cd "$BUILD_DIR"
+
+        echo "Running CMake configure..."
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_SYSTEM_NAME=iOS \
+          -DCMAKE_OSX_ARCHITECTURES="$ARCHS" \
+          -DCMAKE_OSX_SYSROOT="$SDKROOT" \
+          -DCMAKE_OSX_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-13.0}" \
+          -DIOS=TRUE
+
+        echo "Running CMake build..."
+        cmake --build . --config Release
+
+        # Save target info
+        echo "$RUST_TARGET" > "$RUST_TARGET_FILE"
+
+        echo "Build completed successfully"
+        ls -la *.a 2>/dev/null || echo "No .a files in build dir"
+      },
+      :execution_position => :before_compile,
+      :output_files => ['${PODS_TARGET_SRCROOT}/../src/build/libzenoh_ffi.a']
+    }
+  ]
+
+  # Preserve paths
+  s.preserve_paths = [
+    '../src/**/*'
   ]
 end

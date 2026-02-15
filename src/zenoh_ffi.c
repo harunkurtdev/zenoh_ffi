@@ -83,12 +83,39 @@ convert_congestion_control(ZenohCongestionControl cc) {
     return Z_CONGESTION_CONTROL_BLOCK;
   case ZENOH_CONGESTION_CONTROL_DROP:
     return Z_CONGESTION_CONTROL_DROP;
-  case ZENOH_CONGESTION_CONTROL_DROP_FIRST:
-    return Z_CONGESTION_CONTROL_DROP_FIRST;
+  // case ZENOH_CONGESTION_CONTROL_DROP_FIRST:
+  //   return Z_CONGESTION_CONTROL_DROP_FIRST;
   default:
     return Z_CONGESTION_CONTROL_DROP;
   }
 }
+
+// Helper function to get all bytes data from z_loaned_bytes_t into a contiguous buffer.
+// Uses the reader API to correctly handle fragmented (multi-slice) data.
+// Caller must free the returned buffer.
+static uint8_t* get_bytes_data(const z_loaned_bytes_t *bytes, size_t *out_len) {
+  if (bytes == NULL) {
+    *out_len = 0;
+    return NULL;
+  }
+
+  *out_len = z_bytes_len(bytes);
+  if (*out_len == 0) {
+    return NULL;
+  }
+
+  uint8_t *buffer = (uint8_t *)malloc(*out_len);
+  if (buffer == NULL) {
+    *out_len = 0;
+    return NULL;
+  }
+
+  z_bytes_reader_t reader = z_bytes_get_reader(bytes);
+  z_bytes_reader_read(&reader, buffer, *out_len);
+
+  return buffer;
+}
+
 
 static const z_loaned_encoding_t *get_encoding(ZenohEncodingId encoding) {
   switch (encoding) {
@@ -145,7 +172,7 @@ static const z_loaned_encoding_t *get_encoding(ZenohEncodingId encoding) {
 // ============================================================================
 
 FFI_PLUGIN_EXPORT int zenoh_init_logger(void) {
-  z_init_logger();
+  zc_try_init_log_from_env();
   return 0;
 }
 
@@ -380,7 +407,6 @@ FFI_PLUGIN_EXPORT const char *zenoh_session_info(ZenohSession *session) {
   if (session == NULL)
     return NULL;
 
-  z_owned_string_t zid_str;
   z_id_t zid = z_info_zid(z_loan(session->session));
 
   // Convert zid to hex string
@@ -534,7 +560,7 @@ FFI_PLUGIN_EXPORT void zenoh_undeclare_publisher(ZenohPublisher *publisher) {
 // Subscriber Callbacks
 // ============================================================================
 
-static void subscriber_data_handler(const z_loaned_sample_t *sample,
+static void subscriber_data_handler(z_loaned_sample_t *sample,
                                     void *arg) {
   ZenohSubscriber *sub = (ZenohSubscriber *)arg;
   if (sub == NULL || sub->callback == NULL)
@@ -553,28 +579,28 @@ static void subscriber_data_handler(const z_loaned_sample_t *sample,
 
   // Get Payload
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
-  const uint8_t *data = NULL;
   size_t len = 0;
-
-  if (payload != NULL) {
-    data = z_bytes_data(payload);
-    len = z_bytes_len(payload);
-  }
+  uint8_t *data = get_bytes_data(payload, &len);
 
   // Get Attachment
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
   char attachment_str[256] = "";
   if (attachment_bytes != NULL && z_bytes_len(attachment_bytes) > 0) {
-    size_t att_len =
-        z_bytes_len(attachment_bytes) < 255 ? z_bytes_len(attachment_bytes) : 255;
-    memcpy(attachment_str, z_bytes_data(attachment_bytes), att_len);
-    attachment_str[att_len] = '\0';
+    size_t att_len = 0;
+    uint8_t *att_data = get_bytes_data(attachment_bytes, &att_len);
+    if (att_data != NULL && att_len > 0) {
+      size_t copy_len = att_len < 255 ? att_len : 255;
+      memcpy(attachment_str, att_data, copy_len);
+      attachment_str[copy_len] = '\0';
+    }
+    free(att_data);
   }
 
   sub->callback(key, data, len, kind_str, attachment_str, sub->context);
+  free(data);
 }
 
-static void subscriber_data_handler_ex(const z_loaned_sample_t *sample,
+static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
                                        void *arg) {
   ZenohSubscriber *sub = (ZenohSubscriber *)arg;
   if (sub == NULL || sub->callback_ex == NULL)
@@ -600,22 +626,13 @@ static void subscriber_data_handler_ex(const z_loaned_sample_t *sample,
 
   // Get Payload
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
-  const uint8_t *data = NULL;
   size_t len = 0;
-
-  if (payload != NULL) {
-    data = z_bytes_data(payload);
-    len = z_bytes_len(payload);
-  }
+  uint8_t *data = get_bytes_data(payload, &len);
 
   // Get Attachment
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
-  const uint8_t *attachment = NULL;
   size_t attachment_len = 0;
-  if (attachment_bytes != NULL) {
-    attachment = z_bytes_data(attachment_bytes);
-    attachment_len = z_bytes_len(attachment_bytes);
-  }
+  uint8_t *attachment = get_bytes_data(attachment_bytes, &attachment_len);
 
   // Get Timestamp (simplified - just use 0 for now)
   uint64_t timestamp = 0;
@@ -623,6 +640,8 @@ static void subscriber_data_handler_ex(const z_loaned_sample_t *sample,
   sub->callback_ex(key, data, len, sample_kind, priority, congestion, encoding,
                    attachment, attachment_len, timestamp, sub->context);
 
+  free(data);
+  free(attachment);
   z_drop(z_move(enc_str));
 }
 
@@ -789,7 +808,7 @@ FFI_PLUGIN_EXPORT int zenoh_delete(ZenohSession *session, const char *key) {
 // Query (Get)
 // ============================================================================
 
-static void get_reply_handler(z_loaned_reply_t *reply, void *arg) {
+static void get_reply_handler(struct z_loaned_reply_t *reply, void *arg) {
   struct GetContext *ctx = (struct GetContext *)arg;
   if (ctx == NULL || ctx->callback == NULL)
     return;
@@ -804,13 +823,8 @@ static void get_reply_handler(z_loaned_reply_t *reply, void *arg) {
 
     // Payload
     const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    const uint8_t *data = NULL;
     size_t len = 0;
-
-    if (payload != NULL) {
-      data = z_bytes_data(payload);
-      len = z_bytes_len(payload);
-    }
+    uint8_t *data = get_bytes_data(payload, &len);
 
     // Kind
     const char *kind_str = "PUT";
@@ -818,6 +832,7 @@ static void get_reply_handler(z_loaned_reply_t *reply, void *arg) {
       kind_str = "DELETE";
 
     ctx->callback(key, data, len, kind_str, ctx->user_context);
+    free(data);
   }
 }
 
@@ -902,33 +917,31 @@ FFI_PLUGIN_EXPORT void zenoh_get_async_with_options(
 // Queryable
 // ============================================================================
 
-static void query_handler(const z_loaned_query_t *query, void *arg) {
+static void query_handler(z_loaned_query_t *query, void *arg) {
   ZenohQueryable *q = (ZenohQueryable *)arg;
   if (q == NULL || q->callback == NULL)
     return;
 
   // Get Key Selector
-  z_view_keyexpr_t keyexpr = z_query_keyexpr(query);
+  const z_loaned_keyexpr_t *keyexpr = z_query_keyexpr(query);
   z_view_string_t key_str;
   z_keyexpr_as_view_string(keyexpr, &key_str);
   const char *key = z_string_data(z_loan(key_str));
 
-  // Get Selector (parameters)
-  z_view_string_t selector_str = z_query_parameters(query);
+  // Get Selector (parameters) - new API takes 2 params
+  z_view_string_t selector_str;
+  z_query_parameters(query, &selector_str);
   const char *selector = z_string_data(z_loan(selector_str));
 
   // Get Payload (Value)
   const z_loaned_bytes_t *payload = z_query_payload(query);
-  const uint8_t *data = NULL;
   size_t len = 0;
-  if (payload != NULL) {
-    data = z_bytes_data(payload);
-    len = z_bytes_len(payload);
-  }
+  uint8_t *data = get_bytes_data(payload, &len);
 
   const char *kind = "GET";
 
   q->callback(key, selector, data, len, kind, (void *)query, q->context);
+  free(data);
 }
 
 static void drop_queryable_wrapper(void *arg) {
@@ -1065,7 +1078,7 @@ zenoh_undeclare_liveliness_token(ZenohLivelinessToken *token) {
 }
 
 // Liveliness subscriber callback
-static void liveliness_sample_handler(const z_loaned_sample_t *sample,
+static void liveliness_sample_handler(z_loaned_sample_t *sample,
                                       void *arg) {
   ZenohSubscriber *sub = (ZenohSubscriber *)arg;
   if (sub == NULL || sub->liveliness_callback == NULL)
@@ -1126,7 +1139,7 @@ struct LivelinessGetContext {
   void *user_context;
 };
 
-static void liveliness_get_reply_handler(z_loaned_reply_t *reply, void *arg) {
+static void liveliness_get_reply_handler(struct z_loaned_reply_t *reply, void *arg) {
   struct LivelinessGetContext *ctx = (struct LivelinessGetContext *)arg;
   if (ctx == NULL || ctx->callback == NULL)
     return;
@@ -1185,7 +1198,7 @@ FFI_PLUGIN_EXPORT void zenoh_liveliness_get(ZenohSession *session,
 // Scouting
 // ============================================================================
 
-static void scout_callback_wrapper(const z_loaned_hello_t *hello, void *arg) {
+static void scout_callback_wrapper(struct z_loaned_hello_t *hello, void *arg) {
   void (*cb)(const char *) = (void (*)(const char *))arg;
   if (cb) {
     // Extract whatami
@@ -1221,11 +1234,11 @@ static void drop_scout_wrapper(void *arg) {}
 
 FFI_PLUGIN_EXPORT void zenoh_scout(const char *what, const char *config,
                                    void (*callback)(const char *info)) {
-  z_whatami_t w = Z_WHATAMI_PEER | Z_WHATAMI_ROUTER;
+  z_what_t w = Z_WHAT_ROUTER_PEER;
   if (what && strcmp(what, "router") == 0)
-    w = Z_WHATAMI_ROUTER;
+    w = Z_WHAT_ROUTER;
   else if (what && strcmp(what, "peer") == 0)
-    w = Z_WHATAMI_PEER;
+    w = Z_WHAT_PEER;
 
   z_scout_options_t options;
   z_scout_options_default(&options);
@@ -1239,5 +1252,5 @@ FFI_PLUGIN_EXPORT void zenoh_scout(const char *what, const char *config,
   z_closure_hello(&closure, scout_callback_wrapper, drop_scout_wrapper,
                   (void *)callback);
 
-  z_scout(z_move(cfg), &options, &closure);
+  z_scout(z_move(cfg), z_move(closure), &options);
 }

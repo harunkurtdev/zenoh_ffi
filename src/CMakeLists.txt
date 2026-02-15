@@ -128,22 +128,25 @@ if(IS_IOS)
     message(STATUS "Building for iOS")
     message(STATUS "CMAKE_OSX_ARCHITECTURES: ${CMAKE_OSX_ARCHITECTURES}")
     message(STATUS "CMAKE_OSX_SYSROOT: ${CMAKE_OSX_SYSROOT}")
-    
+
+    # Convert SDK path to lowercase for comparison
+    string(TOLOWER "${CMAKE_OSX_SYSROOT}" CMAKE_OSX_SYSROOT_LOWER)
+
     # Determine iOS target based on SDK
-    if(CMAKE_OSX_SYSROOT MATCHES "iphonesimulator")
+    if(CMAKE_OSX_SYSROOT_LOWER MATCHES "iphonesimulator")
         # iOS Simulator
         if(CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
             set(RUST_TARGET "aarch64-apple-ios-sim")
-            set(CARGO_TOOLCHAIN "+nightly")
-            set(BUILD_STD "-Z build-std")
+            set(CARGO_TOOLCHAIN "")
+            set(BUILD_STD "")
         elseif(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
             set(RUST_TARGET "x86_64-apple-ios")
             set(CARGO_TOOLCHAIN "")
             set(BUILD_STD "")
         else()
             set(RUST_TARGET "aarch64-apple-ios-sim")
-            set(CARGO_TOOLCHAIN "+nightly")
-            set(BUILD_STD "-Z build-std")
+            set(CARGO_TOOLCHAIN "")
+            set(BUILD_STD "")
         endif()
         message(STATUS "Detected iOS Simulator build: ${RUST_TARGET}")
     else()

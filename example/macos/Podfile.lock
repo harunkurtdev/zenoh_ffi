@@ -1,21 +1,21 @@
 PODS:
   - FlutterMacOS (1.0.0)
-  - zenoh_dart (0.0.1):
+  - zenoh_ffi (0.0.1):
     - FlutterMacOS
 
 DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - zenoh_dart (from `Flutter/ephemeral/.symlinks/plugins/zenoh_dart/macos`)
+  - zenoh_ffi (from `Flutter/ephemeral/.symlinks/plugins/zenoh_ffi/macos`)
 
 EXTERNAL SOURCES:
   FlutterMacOS:
     :path: Flutter/ephemeral
-  zenoh_dart:
-    :path: Flutter/ephemeral/.symlinks/plugins/zenoh_dart/macos
+  zenoh_ffi:
+    :path: Flutter/ephemeral/.symlinks/plugins/zenoh_ffi/macos
 
 SPEC CHECKSUMS:
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
-  zenoh_dart: a83647aa9517500158a13fcbfc518f76c91460da
+  zenoh_ffi: 04c51ce18df5b084a01eaacc49ebaa7e413ccca1
 
 PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
 
