@@ -209,27 +209,59 @@ if(IS_IOS)
         endif()
     endif()
     
+    # --- Patch zenoh-util for iOS: set_bind_to_device_{tcp,udp}_socket ---
+    # zenoh-c 1.6.2 has cfg gates for linux/android/macos/windows but NOT ios.
+    # We patch the source in Cargo's git checkout to add target_os = "ios".
+    # First fetch deps, then find and patch mod.rs, then build.
+    set(ZENOH_IOS_PATCH_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/patch_zenoh_ios.sh")
+    file(WRITE ${ZENOH_IOS_PATCH_SCRIPT}
+"#!/bin/bash
+set -e
+export PATH=\"$ENV{HOME}/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:$PATH\"
+export RUSTUP_HOME=\"$ENV{HOME}/.rustup\"
+export CARGO_HOME=\"$ENV{HOME}/.cargo\"
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++
+export AR=/usr/bin/ar
+
+cd \"${zenohc_SOURCE_DIR}\"
+
+echo '=== Fetching Cargo dependencies ==='
+cargo fetch --target ${RUST_TARGET}
+
+echo '=== Patching zenoh-util for iOS support ==='
+PATCHED=0
+for MOD_RS in $(find \"$ENV{HOME}/.cargo/git/checkouts\" -path '*/zenoh-util/src/net/mod.rs' 2>/dev/null); do
+    if grep -q 'target_os = .macos., target_os = .windows.)' \"$MOD_RS\" && ! grep -q 'target_os = .ios.' \"$MOD_RS\"; then
+        echo \"Patching: $MOD_RS\"
+        sed -i '' 's/target_os = \"macos\", target_os = \"windows\"/target_os = \"macos\", target_os = \"windows\", target_os = \"ios\"/g' \"$MOD_RS\"
+        PATCHED=$((PATCHED + 1))
+    fi
+done
+echo \"Patched $PATCHED file(s)\"
+
+echo '=== Building zenoh-c for iOS ==='
+cargo ${CARGO_TOOLCHAIN} build --release --target ${RUST_TARGET} --lib ${BUILD_STD}
+
+echo '=== Verifying build output ==='
+if [ ! -f '${ZENOHC_LIB}' ]; then
+    echo 'ERROR: Static library not found at ${ZENOHC_LIB}'
+    exit 1
+fi
+file '${ZENOHC_LIB}'
+echo '=== iOS build complete ==='
+")
+
     # Clean any existing macOS builds to prevent wrong architecture linking
     add_custom_command(
         OUTPUT ${ZENOHC_LIB}
         # Remove any macOS dylib that might interfere
         COMMAND ${CMAKE_COMMAND} -E remove -f ${ZENOHC_BUILD_DIR}/target/aarch64-apple-darwin/release/libzenohc.dylib
         COMMAND ${CMAKE_COMMAND} -E remove -f ${ZENOHC_BUILD_DIR}/target/x86_64-apple-darwin/release/libzenohc.dylib
-        # Build for iOS target with explicit Rust environment
-        # Override CC/CXX to avoid Xcode's space-containing toolchain paths
-        COMMAND ${CMAKE_COMMAND} -E env
-            RUSTUP_HOME=$ENV{HOME}/.rustup
-            CARGO_HOME=$ENV{HOME}/.cargo
-            CC=/usr/bin/clang
-            CXX=/usr/bin/clang++
-            AR=/usr/bin/ar
-            cargo ${CARGO_TOOLCHAIN} build --release --target ${RUST_TARGET} --lib ${BUILD_STD}
-        # Verify the output is a static library
-        COMMAND ${CMAKE_COMMAND} -E echo "Verifying iOS build..."
-        COMMAND test -f ${ZENOHC_LIB} || (echo "ERROR: Static library not found at ${ZENOHC_LIB}" && exit 1)
-        COMMAND file ${ZENOHC_LIB}
+        # Run the patch + build script
+        COMMAND bash ${ZENOH_IOS_PATCH_SCRIPT}
         WORKING_DIRECTORY ${zenohc_SOURCE_DIR}
-        COMMENT "Building zenoh-c static library for iOS target: ${RUST_TARGET}"
+        COMMENT "Patching and building zenoh-c static library for iOS target: ${RUST_TARGET}"
         VERBATIM
     )
     

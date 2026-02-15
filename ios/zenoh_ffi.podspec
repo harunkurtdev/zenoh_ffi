@@ -51,13 +51,6 @@ query/reply, and distributed computing.
     SDK="iphoneos"
     RUST_TARGET="aarch64-apple-ios"
 
-    # For simulator on Apple Silicon
-    if [ "$(uname -m)" = "arm64" ]; then
-      # Build for both device and simulator-compatible target
-      # Default to device; simulator build handled separately if needed
-      RUST_TARGET="aarch64-apple-ios"
-    fi
-
     echo "Installing Rust target: ${RUST_TARGET}..."
     rustup target add ${RUST_TARGET} 2>/dev/null || true
     # Also add simulator target
@@ -79,6 +72,7 @@ query/reply, and distributed computing.
     export SDKROOT=$(xcrun --sdk ${SDK} --show-sdk-path)
     echo "Building for SDK: ${SDK}, Arch: ${ARCH}, Rust target: ${RUST_TARGET}"
 
+    # Configure via CMake (this will FetchContent zenoh-c)
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_SYSTEM_NAME=iOS \
@@ -87,16 +81,60 @@ query/reply, and distributed computing.
       -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
       -DIOS=TRUE
 
+    # ================================================================
+    # PATCH: zenoh-c 1.6.2 iOS support
+    # zenoh-util has cfg gates for set_bind_to_device_{tcp,udp}_socket
+    # that cover linux/android/macos/windows but NOT ios.
+    # We fetch deps first, then patch the source in cargo's git cache.
+    # ================================================================
+    echo "================================================"
+    echo "Patching zenoh-util for iOS support..."
+    echo "================================================"
+
+    ZENOHC_SRC_DIR=$(find _deps -name "zenohc-src" -type d 2>/dev/null | head -1)
+    if [ -n "$ZENOHC_SRC_DIR" ]; then
+      cd "$ZENOHC_SRC_DIR"
+      # Fetch all cargo dependencies so source is available
+      cargo fetch --target ${RUST_TARGET} 2>&1 || true
+      cd - > /dev/null
+    fi
+
+    # Patch all zenoh-util/src/net/mod.rs files in cargo's git checkout cache
+    PATCHED=0
+    for MOD_RS in $(find "$HOME/.cargo/git/checkouts" -path "*/zenoh-util/src/net/mod.rs" 2>/dev/null); do
+      if grep -q 'target_os = "macos", target_os = "windows")' "$MOD_RS" && ! grep -q 'target_os = "ios"' "$MOD_RS"; then
+        echo "Patching: $MOD_RS"
+        sed -i '' 's/target_os = "macos", target_os = "windows"/target_os = "macos", target_os = "windows", target_os = "ios"/g' "$MOD_RS"
+        PATCHED=$((PATCHED + 1))
+      fi
+    done
+    echo "Patched $PATCHED file(s) for iOS support"
+
+    # Now build (the patched source will be used)
+    echo "================================================"
+    echo "Building with CMake..."
+    echo "================================================"
     cmake --build . --config Release
 
     # Copy libzenohc.a to build root
     ZENOHC_LIB=$(find _deps/zenohc-src/target -name "libzenohc.a" -path "*/${RUST_TARGET}/release/*" 2>/dev/null | head -1)
     if [ -n "$ZENOHC_LIB" ]; then
       cp "$ZENOHC_LIB" "$(pwd)/libzenohc.a"
-      echo "Copied libzenohc.a"
+      echo "Copied libzenohc.a to build root"
     else
       echo "WARNING: libzenohc.a not found for ${RUST_TARGET}"
       find _deps/zenohc-src/target -name "libzenohc.a" 2>/dev/null || true
+    fi
+
+    # Also copy libzenoh_ffi.a if it's not already in build root
+    if [ -f "libzenoh_ffi.a" ]; then
+      echo "libzenoh_ffi.a already in build root"
+    else
+      FFI_LIB=$(find . -name "libzenoh_ffi.a" -not -path "./libzenoh_ffi.a" 2>/dev/null | head -1)
+      if [ -n "$FFI_LIB" ]; then
+        cp "$FFI_LIB" "$(pwd)/libzenoh_ffi.a"
+        echo "Copied libzenoh_ffi.a to build root"
+      fi
     fi
 
     echo "================================================"
