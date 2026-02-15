@@ -92,17 +92,47 @@ A new Flutter FFI plugin project.
 
   s.script_phases = [
       {
+        :name => 'Build Zenoh-C via CMake',
+        :script => %q{
+          set -e
+          export PATH="$HOME/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+
+          SRC_DIR="${PODS_TARGET_SRCROOT}/../src"
+          BUILD_DIR="${SRC_DIR}/build"
+
+          # Skip if already built
+          if [ -f "${BUILD_DIR}/libzenoh_ffi.dylib" ] && [ -f "${BUILD_DIR}/libzenohc.dylib" ]; then
+            echo "Libraries already built, skipping..."
+            exit 0
+          fi
+
+          if ! command -v cargo &> /dev/null; then
+            echo "Error: cargo not found! Please install Rust."
+            exit 1
+          fi
+
+          mkdir -p "$BUILD_DIR"
+          cd "$BUILD_DIR"
+
+          export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="$(uname -m)" -DCMAKE_OSX_SYSROOT=$SDKROOT
+          cmake --build . --config Release
+
+          echo "zenoh-c built successfully"
+        },
+        :execution_position => :before_compile
+      },
+      {
         :name => 'Copy Zenoh Libraries to App Bundle',
-                :script => 'set -e
+        :script => %q{
+          set -e
           FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
           mkdir -p "${FRAMEWORKS_DIR}"
           cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenoh_ffi.dylib" "${FRAMEWORKS_DIR}/"
           cp -R "${PODS_TARGET_SRCROOT}/../src/build/libzenohc.dylib" "${FRAMEWORKS_DIR}/"
-          # cp -R "${PODS_TARGET_SRCROOT}/../src/build/zenoh_ffi.framework" "${FRAMEWORKS_DIR}/"
           codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenoh_ffi.dylib" || true
           codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/libzenohc.dylib" || true
-          # codesign -f -s "${EXPANDED_CODE_SIGN_IDENTITY}" "${FRAMEWORKS_DIR}/zenoh_ffi.framework" || true
-          ',
+        },
         :execution_position => :after_compile
       }
     ]

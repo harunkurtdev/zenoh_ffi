@@ -566,10 +566,14 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
   if (sub == NULL || sub->callback == NULL)
     return;
 
-  // Get Key
+  // Get Key - null-terminated copy like old working code (f457774)
   z_view_string_t key_str;
   z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
-  const char *key = z_string_data(z_loan(key_str));
+  size_t key_len = z_string_len(z_loan(key_str));
+  char *key = (char *)malloc(key_len + 1);
+  if (key == NULL) return;
+  memcpy(key, z_string_data(z_loan(key_str)), key_len);
+  key[key_len] = '\0';
 
   // Get Kind
   const char *kind_str = "PUT";
@@ -577,26 +581,39 @@ static void subscriber_data_handler(z_loaned_sample_t *sample,
   if (kind == Z_SAMPLE_KIND_DELETE)
     kind_str = "DELETE";
 
-  // Get Payload
+  // Get Payload - use z_bytes_to_string like old working code (f457774)
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
+  z_owned_string_t payload_string;
   size_t len = 0;
-  uint8_t *data = get_bytes_data(payload, &len);
+  uint8_t *data = NULL;
+  if (z_bytes_to_string(payload, &payload_string) == 0) {
+    len = z_string_len(z_loan(payload_string));
+    data = (uint8_t *)malloc(len);
+    if (data != NULL) {
+      memcpy(data, z_string_data(z_loan(payload_string)), len);
+    }
+    z_drop(z_move(payload_string));
+  } else {
+    // Fallback: use reader for binary data
+    data = get_bytes_data(payload, &len);
+  }
 
   // Get Attachment
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
   char attachment_str[256] = "";
   if (attachment_bytes != NULL && z_bytes_len(attachment_bytes) > 0) {
-    size_t att_len = 0;
-    uint8_t *att_data = get_bytes_data(attachment_bytes, &att_len);
-    if (att_data != NULL && att_len > 0) {
+    z_owned_string_t att_string;
+    if (z_bytes_to_string(attachment_bytes, &att_string) == 0) {
+      size_t att_len = z_string_len(z_loan(att_string));
       size_t copy_len = att_len < 255 ? att_len : 255;
-      memcpy(attachment_str, att_data, copy_len);
+      memcpy(attachment_str, z_string_data(z_loan(att_string)), copy_len);
       attachment_str[copy_len] = '\0';
+      z_drop(z_move(att_string));
     }
-    free(att_data);
   }
 
   sub->callback(key, data, len, kind_str, attachment_str, sub->context);
+  free(key);
   free(data);
 }
 
@@ -606,10 +623,14 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   if (sub == NULL || sub->callback_ex == NULL)
     return;
 
-  // Get Key
+  // Get Key - null-terminated copy
   z_view_string_t key_str;
   z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
-  const char *key = z_string_data(z_loan(key_str));
+  size_t key_len = z_string_len(z_loan(key_str));
+  char *key = (char *)malloc(key_len + 1);
+  if (key == NULL) return;
+  memcpy(key, z_string_data(z_loan(key_str)), key_len);
+  key[key_len] = '\0';
 
   // Get Kind
   int sample_kind = (z_sample_kind(sample) == Z_SAMPLE_KIND_DELETE) ? 1 : 0;
@@ -618,16 +639,32 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   int priority = (int)z_sample_priority(sample);
   int congestion = (int)z_sample_congestion_control(sample);
 
-  // Get Encoding
+  // Get Encoding - null-terminated copy
   const z_loaned_encoding_t *enc = z_sample_encoding(sample);
   z_owned_string_t enc_str;
   z_encoding_to_string(enc, &enc_str);
-  const char *encoding = z_string_data(z_loan(enc_str));
+  size_t enc_len = z_string_len(z_loan(enc_str));
+  char *encoding = (char *)malloc(enc_len + 1);
+  if (encoding == NULL) { free(key); z_drop(z_move(enc_str)); return; }
+  memcpy(encoding, z_string_data(z_loan(enc_str)), enc_len);
+  encoding[enc_len] = '\0';
+  z_drop(z_move(enc_str));
 
   // Get Payload
   const z_loaned_bytes_t *payload = z_sample_payload(sample);
+  z_owned_string_t payload_string;
   size_t len = 0;
-  uint8_t *data = get_bytes_data(payload, &len);
+  uint8_t *data = NULL;
+  if (z_bytes_to_string(payload, &payload_string) == 0) {
+    len = z_string_len(z_loan(payload_string));
+    data = (uint8_t *)malloc(len);
+    if (data != NULL) {
+      memcpy(data, z_string_data(z_loan(payload_string)), len);
+    }
+    z_drop(z_move(payload_string));
+  } else {
+    data = get_bytes_data(payload, &len);
+  }
 
   // Get Attachment
   const z_loaned_bytes_t *attachment_bytes = z_sample_attachment(sample);
@@ -640,9 +677,10 @@ static void subscriber_data_handler_ex(z_loaned_sample_t *sample,
   sub->callback_ex(key, data, len, sample_kind, priority, congestion, encoding,
                    attachment, attachment_len, timestamp, sub->context);
 
+  free(key);
+  free(encoding);
   free(data);
   free(attachment);
-  z_drop(z_move(enc_str));
 }
 
 static void drop_subscriber_wrapper(void *arg) {
@@ -816,15 +854,30 @@ static void get_reply_handler(struct z_loaned_reply_t *reply, void *arg) {
   if (z_reply_is_ok(reply)) {
     const z_loaned_sample_t *sample = z_reply_ok(reply);
 
-    // Key
+    // Key - null-terminated copy
     z_view_string_t key_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
-    const char *key = z_string_data(z_loan(key_str));
+    size_t key_len = z_string_len(z_loan(key_str));
+    char *key = (char *)malloc(key_len + 1);
+    if (key == NULL) return;
+    memcpy(key, z_string_data(z_loan(key_str)), key_len);
+    key[key_len] = '\0';
 
     // Payload
     const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    z_owned_string_t payload_string;
     size_t len = 0;
-    uint8_t *data = get_bytes_data(payload, &len);
+    uint8_t *data = NULL;
+    if (z_bytes_to_string(payload, &payload_string) == 0) {
+      len = z_string_len(z_loan(payload_string));
+      data = (uint8_t *)malloc(len);
+      if (data != NULL) {
+        memcpy(data, z_string_data(z_loan(payload_string)), len);
+      }
+      z_drop(z_move(payload_string));
+    } else {
+      data = get_bytes_data(payload, &len);
+    }
 
     // Kind
     const char *kind_str = "PUT";
@@ -832,6 +885,7 @@ static void get_reply_handler(struct z_loaned_reply_t *reply, void *arg) {
       kind_str = "DELETE";
 
     ctx->callback(key, data, len, kind_str, ctx->user_context);
+    free(key);
     free(data);
   }
 }
@@ -922,16 +976,24 @@ static void query_handler(z_loaned_query_t *query, void *arg) {
   if (q == NULL || q->callback == NULL)
     return;
 
-  // Get Key Selector
+  // Get Key Selector - null-terminated copy
   const z_loaned_keyexpr_t *keyexpr = z_query_keyexpr(query);
   z_view_string_t key_str;
   z_keyexpr_as_view_string(keyexpr, &key_str);
-  const char *key = z_string_data(z_loan(key_str));
+  size_t key_len = z_string_len(z_loan(key_str));
+  char *key = (char *)malloc(key_len + 1);
+  if (key == NULL) return;
+  memcpy(key, z_string_data(z_loan(key_str)), key_len);
+  key[key_len] = '\0';
 
-  // Get Selector (parameters) - new API takes 2 params
+  // Get Selector (parameters) - null-terminated copy
   z_view_string_t selector_str;
   z_query_parameters(query, &selector_str);
-  const char *selector = z_string_data(z_loan(selector_str));
+  size_t sel_len = z_string_len(z_loan(selector_str));
+  char *selector = (char *)malloc(sel_len + 1);
+  if (selector == NULL) { free(key); return; }
+  memcpy(selector, z_string_data(z_loan(selector_str)), sel_len);
+  selector[sel_len] = '\0';
 
   // Get Payload (Value)
   const z_loaned_bytes_t *payload = z_query_payload(query);
@@ -941,6 +1003,8 @@ static void query_handler(z_loaned_query_t *query, void *arg) {
   const char *kind = "GET";
 
   q->callback(key, selector, data, len, kind, (void *)query, q->context);
+  free(key);
+  free(selector);
   free(data);
 }
 
@@ -1084,15 +1148,20 @@ static void liveliness_sample_handler(z_loaned_sample_t *sample,
   if (sub == NULL || sub->liveliness_callback == NULL)
     return;
 
-  // Get Key
+  // Get Key - null-terminated copy
   z_view_string_t key_str;
   z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
-  const char *key = z_string_data(z_loan(key_str));
+  size_t key_len = z_string_len(z_loan(key_str));
+  char *key = (char *)malloc(key_len + 1);
+  if (key == NULL) return;
+  memcpy(key, z_string_data(z_loan(key_str)), key_len);
+  key[key_len] = '\0';
 
   // Get alive status from sample kind
   int is_alive = (z_sample_kind(sample) == Z_SAMPLE_KIND_PUT) ? 1 : 0;
 
   sub->liveliness_callback(key, is_alive, sub->context);
+  free(key);
 }
 
 FFI_PLUGIN_EXPORT ZenohSubscriber *zenoh_declare_liveliness_subscriber(
@@ -1149,10 +1218,15 @@ static void liveliness_get_reply_handler(struct z_loaned_reply_t *reply, void *a
 
     z_view_string_t key_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_str);
-    const char *key = z_string_data(z_loan(key_str));
+    size_t key_len = z_string_len(z_loan(key_str));
+    char *key = (char *)malloc(key_len + 1);
+    if (key == NULL) return;
+    memcpy(key, z_string_data(z_loan(key_str)), key_len);
+    key[key_len] = '\0';
 
     // Liveliness get returns currently alive tokens
     ctx->callback(key, 1, ctx->user_context);
+    free(key);
   }
 }
 
