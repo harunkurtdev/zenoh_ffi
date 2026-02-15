@@ -47,6 +47,8 @@ class _LivelinessPageState extends State<LivelinessPage> {
         endpoints: [
           'tcp/localhost:7447',
           'tcp/127.0.0.1:7447',
+          'tcp/10.81.29.92:7447',
+          'tcp/10.0.0.2:7447', // android emulator localhost
         ],
       );
 
@@ -66,7 +68,7 @@ class _LivelinessPageState extends State<LivelinessPage> {
             _eventLog.insert(
               0,
               '[${_formatTime(DateTime.now())}] ${event.key} -> '
-                  '${event.isAlive ? "ONLINE" : "OFFLINE"}',
+              '${event.isAlive ? "ONLINE" : "OFFLINE"}',
             );
             // Keep log manageable
             if (_eventLog.length > 50) _eventLog.removeLast();
@@ -122,8 +124,8 @@ class _LivelinessPageState extends State<LivelinessPage> {
 
     try {
       final events = <ZenohLivelinessEvent>[];
-      await for (final event
-          in _session!.livelinessGet('device/**', timeout: const Duration(seconds: 3))) {
+      await for (final event in _session!
+          .livelinessGet('device/**', timeout: const Duration(seconds: 3))) {
         events.add(event);
       }
 
@@ -158,8 +160,7 @@ class _LivelinessPageState extends State<LivelinessPage> {
     }
   }
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:'
+  String _formatTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:'
       '${dt.minute.toString().padLeft(2, '0')}:'
       '${dt.second.toString().padLeft(2, '0')}';
 
@@ -189,59 +190,24 @@ class _LivelinessPageState extends State<LivelinessPage> {
             )
           : _errorMessage != null
               ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.cloud_off, color: Colors.red, size: 48),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Connection Failed',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$_errorMessage',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.amber[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.amber.shade200),
-                          ),
-                          child: const Column(
-                            children: [
-                              Text(
-                                'Make sure a Zenoh router is running:',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              SizedBox(height: 4),
-                              SelectableText(
-                                'zenohd -l tcp/0.0.0.0:7447',
-                                style: TextStyle(fontFamily: 'monospace', fontSize: 13),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _isInitializing = true;
-                              _errorMessage = null;
-                            });
-                            _initializeZenoh();
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error, color: Colors.red, size: 48),
+                      const SizedBox(height: 16),
+                      Text('Error: $_errorMessage'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _isInitializing = true;
+                            _errorMessage = null;
+                          });
+                          _initializeZenoh();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
                 )
               : Column(
@@ -266,12 +232,15 @@ class _LivelinessPageState extends State<LivelinessPage> {
                                   Text(
                                     'Device: $_deviceId',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 16),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
                                   ),
                                   Text(
                                     _isOnline ? 'Online' : 'Offline',
                                     style: TextStyle(
-                                      color: _isOnline ? Colors.green : Colors.grey,
+                                      color: _isOnline
+                                          ? Colors.green
+                                          : Colors.grey,
                                     ),
                                   ),
                                 ],
@@ -279,11 +248,15 @@ class _LivelinessPageState extends State<LivelinessPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: _toggleOnline,
-                              icon: Icon(_isOnline ? Icons.cloud_off : Icons.cloud_done),
-                              label: Text(_isOnline ? 'Go Offline' : 'Go Online'),
+                              icon: Icon(_isOnline
+                                  ? Icons.cloud_off
+                                  : Icons.cloud_done),
+                              label:
+                                  Text(_isOnline ? 'Go Offline' : 'Go Online'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    _isOnline ? Colors.red[400] : Colors.green[400],
+                                backgroundColor: _isOnline
+                                    ? Colors.red[400]
+                                    : Colors.green[400],
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -299,7 +272,8 @@ class _LivelinessPageState extends State<LivelinessPage> {
                         children: [
                           const Text(
                             'Fleet Devices',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           Text(
@@ -331,7 +305,9 @@ class _LivelinessPageState extends State<LivelinessPage> {
                                 return ListTile(
                                   leading: Icon(
                                     Icons.devices,
-                                    color: info.isAlive ? Colors.green : Colors.grey,
+                                    color: info.isAlive
+                                        ? Colors.green
+                                        : Colors.grey,
                                   ),
                                   title: Text(key),
                                   subtitle: Text(
@@ -342,8 +318,9 @@ class _LivelinessPageState extends State<LivelinessPage> {
                                       style: const TextStyle(
                                           color: Colors.white, fontSize: 12),
                                     ),
-                                    backgroundColor:
-                                        info.isAlive ? Colors.green : Colors.red,
+                                    backgroundColor: info.isAlive
+                                        ? Colors.green
+                                        : Colors.red,
                                   ),
                                 );
                               },
@@ -359,7 +336,8 @@ class _LivelinessPageState extends State<LivelinessPage> {
                         children: [
                           const Text(
                             'Event Log',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                           TextButton(
@@ -376,13 +354,16 @@ class _LivelinessPageState extends State<LivelinessPage> {
                         itemCount: _eventLog.length,
                         itemBuilder: (context, index) {
                           final log = _eventLog[index];
-                          final isOnline = log.contains('ONLINE') || log.contains('Refreshed');
+                          final isOnline = log.contains('ONLINE') ||
+                              log.contains('Refreshed');
                           return Text(
                             log,
                             style: TextStyle(
                               fontSize: 12,
                               fontFamily: 'monospace',
-                              color: isOnline ? Colors.green[700] : Colors.red[700],
+                              color: isOnline
+                                  ? Colors.green[700]
+                                  : Colors.red[700],
                             ),
                           );
                         },

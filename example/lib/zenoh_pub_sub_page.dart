@@ -111,7 +111,8 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
                     const SizedBox(height: 16),
                     const Text(
                       'Connection Failed',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -136,7 +137,8 @@ class _ZenohHomePageState extends State<ZenohHomePage> {
                           SizedBox(height: 4),
                           SelectableText(
                             'zenohd -l tcp/0.0.0.0:7447',
-                            style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                            style: TextStyle(
+                                fontFamily: 'monospace', fontSize: 13),
                           ),
                         ],
                       ),

@@ -8,6 +8,11 @@ import 'scout_page.dart';
 import 'sensor_dashboard_page.dart';
 import 'service_page.dart';
 import 'kv_store_page.dart';
+import 'image_transfer_page.dart';
+import 'router_mesh_page.dart';
+import 'resilient_stream_page.dart';
+import 'wildcard_explorer_page.dart';
+import 'query_payload_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -123,6 +128,56 @@ class HomePage extends StatelessWidget {
             Icons.storage,
             Colors.brown,
             const KvStorePage(),
+          ),
+
+          const SizedBox(height: 24),
+
+          // --- Expert Examples ---
+          _buildSectionHeader('Expert Examples'),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Binary Transfer',
+            'Image/binary encodings, fromMimeType, raw query replies',
+            Icons.image,
+            Colors.deepPurple,
+            const ImageTransferPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Router & Config',
+            'Router mode, listen endpoints, custom config keys',
+            Icons.hub,
+            Colors.blueGrey,
+            const RouterMeshPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Resilient Streams',
+            'Retry executeStream, concurrent ops, error recovery',
+            Icons.refresh,
+            Colors.amber,
+            const ResilientStreamPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Wildcard Explorer',
+            'Publisher.delete, timestamps, * vs ** wildcards',
+            Icons.account_tree,
+            Colors.lime,
+            const WildcardExplorerPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Query Payload',
+            'GetOptions.payload, query.value, stream vs collect',
+            Icons.dns,
+            Colors.pink,
+            const QueryPayloadPage(),
           ),
           const SizedBox(height: 16),
         ],

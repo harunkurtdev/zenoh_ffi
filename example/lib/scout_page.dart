@@ -66,8 +66,7 @@ class _ScoutPageState extends State<ScoutPage> {
         }
       });
 
-      await for (final info
-          in ZenohSession.scout(what: _scoutWhat)) {
+      await for (final info in ZenohSession.scout(what: _scoutWhat)) {
         if (!mounted || _isDisposed) break;
         setState(() {
           _scoutResults.add(_ScoutResult(
@@ -186,11 +185,9 @@ class _ScoutPageState extends State<ScoutPage> {
                   const SizedBox(height: 8),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(
-                          value: 'peer|router', label: Text('All')),
+                      ButtonSegment(value: 'peer|router', label: Text('All')),
                       ButtonSegment(value: 'peer', label: Text('Peers')),
-                      ButtonSegment(
-                          value: 'router', label: Text('Routers')),
+                      ButtonSegment(value: 'router', label: Text('Routers')),
                     ],
                     selected: {_scoutWhat},
                     onSelectionChanged: (value) {
@@ -261,8 +258,8 @@ class _ScoutPageState extends State<ScoutPage> {
                       final result = _scoutResults[index];
                       return Card(
                         child: ExpansionTile(
-                          leading: const Icon(Icons.router,
-                              color: Colors.indigo),
+                          leading:
+                              const Icon(Icons.router, color: Colors.indigo),
                           title: Text('Node #${index + 1}'),
                           subtitle: Text(
                             'Discovered at ${_formatTime(result.discoveredAt)}',
@@ -305,13 +302,11 @@ class _ScoutPageState extends State<ScoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('ZenohConfigBuilder',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 4),
-                  Text(
-                      'Build a session config programmatically',
-                      style: TextStyle(
-                          color: Colors.grey[600], fontSize: 13)),
+                  Text('Build a session config programmatically',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   const SizedBox(height: 16),
 
                   // Mode selector
@@ -353,16 +348,14 @@ class _ScoutPageState extends State<ScoutPage> {
                     subtitle: const Text('Discover peers via multicast'),
                     value: _multicastScouting,
                     dense: true,
-                    onChanged: (v) =>
-                        setState(() => _multicastScouting = v),
+                    onChanged: (v) => setState(() => _multicastScouting = v),
                   ),
                   SwitchListTile(
                     title: const Text('Gossip Scouting'),
                     subtitle: const Text('Discover peers via gossip protocol'),
                     value: _gossipScouting,
                     dense: true,
-                    onChanged: (v) =>
-                        setState(() => _gossipScouting = v),
+                    onChanged: (v) => setState(() => _gossipScouting = v),
                   ),
                 ],
               ),
@@ -381,8 +374,7 @@ class _ScoutPageState extends State<ScoutPage> {
                 children: [
                   const Text('Config Preview',
                       style: TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold)),
+                          color: Colors.white70, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   SelectableText(
                     _buildConfigPreview(),
@@ -420,9 +412,8 @@ class _ScoutPageState extends State<ScoutPage> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.link),
-              label: Text(_isConnecting
-                  ? 'Connecting...'
-                  : 'Open Session with Config'),
+              label: Text(
+                  _isConnecting ? 'Connecting...' : 'Open Session with Config'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 backgroundColor: Colors.green,
@@ -463,8 +454,7 @@ class _ScoutPageState extends State<ScoutPage> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.check_circle,
-                            color: Colors.green),
+                        const Icon(Icons.check_circle, color: Colors.green),
                         const SizedBox(width: 8),
                         const Text('Session Active',
                             style: TextStyle(
@@ -473,8 +463,7 @@ class _ScoutPageState extends State<ScoutPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text('Mode: $_mode',
-                        style: const TextStyle(fontSize: 13)),
+                    Text('Mode: $_mode', style: const TextStyle(fontSize: 13)),
                     Text('Endpoint: ${_endpointController.text}',
                         style: const TextStyle(fontSize: 13)),
                     if (_sessionId != null)
@@ -501,8 +490,7 @@ class _ScoutPageState extends State<ScoutPage> {
   .gossipScouting($_gossipScouting)''';
   }
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:'
+  String _formatTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:'
       '${dt.minute.toString().padLeft(2, '0')}:'
       '${dt.second.toString().padLeft(2, '0')}';
 }

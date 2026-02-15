@@ -68,8 +68,8 @@ class _KvStorePageState extends State<KvStorePage> {
         endpoints: [
           'tcp/localhost:7447',
           'tcp/127.0.0.1:7447',
-        'tcp/10.81.29.92:7447',
-        'tcp/10.0.0.2:7447', // android emulator localhost
+          'tcp/10.81.29.92:7447',
+          'tcp/10.0.0.2:7447', // android emulator localhost
         ],
       );
 
@@ -374,11 +374,13 @@ class _KvStorePageState extends State<KvStorePage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.cloud_off, color: Colors.red, size: 48),
+                        const Icon(Icons.cloud_off,
+                            color: Colors.red, size: 48),
                         const SizedBox(height: 16),
                         const Text(
                           'Connection Failed',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -403,7 +405,8 @@ class _KvStorePageState extends State<KvStorePage> {
                               SizedBox(height: 4),
                               SelectableText(
                                 'zenohd -l tcp/0.0.0.0:7447',
-                                style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                                style: TextStyle(
+                                    fontFamily: 'monospace', fontSize: 13),
                               ),
                             ],
                           ),
@@ -434,17 +437,13 @@ class _KvStorePageState extends State<KvStorePage> {
                         children: [
                           // Watch toggle
                           Card(
-                            color: _isWatching
-                                ? Colors.blue[50]
-                                : null,
+                            color: _isWatching ? Colors.blue[50] : null,
                             child: ListTile(
                               leading: Icon(
                                 _isWatching
                                     ? Icons.visibility
                                     : Icons.visibility_off,
-                                color: _isWatching
-                                    ? Colors.blue
-                                    : Colors.grey,
+                                color: _isWatching ? Colors.blue : Colors.grey,
                               ),
                               title: Text(_isWatching
                                   ? 'Watching kv/** (live updates)'
@@ -488,8 +487,8 @@ class _KvStorePageState extends State<KvStorePage> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child:
-                                            DropdownButtonFormField<ZenohEncoding>(
+                                        child: DropdownButtonFormField<
+                                            ZenohEncoding>(
                                           value: _selectedEncoding,
                                           isExpanded: true,
                                           decoration: const InputDecoration(
@@ -519,8 +518,8 @@ class _KvStorePageState extends State<KvStorePage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child:
-                                            DropdownButtonFormField<ZenohPriority>(
+                                        child: DropdownButtonFormField<
+                                            ZenohPriority>(
                                           value: _selectedPriority,
                                           isExpanded: true,
                                           decoration: const InputDecoration(
@@ -537,8 +536,8 @@ class _KvStorePageState extends State<KvStorePage> {
                                               .toList(),
                                           onChanged: (v) {
                                             if (v != null) {
-                                              setState(() =>
-                                                  _selectedPriority = v);
+                                              setState(
+                                                  () => _selectedPriority = v);
                                             }
                                           },
                                         ),
@@ -675,7 +674,8 @@ class _KvStorePageState extends State<KvStorePage> {
                                         spacing: 4,
                                         children: [
                                           if (entry.value.encoding != null)
-                                            _badge(entry.value.encoding!.mimeType,
+                                            _badge(
+                                                entry.value.encoding!.mimeType,
                                                 Colors.purple),
                                           if (entry.value.metadata != null)
                                             _badge('meta', Colors.teal),
@@ -697,8 +697,7 @@ class _KvStorePageState extends State<KvStorePage> {
                                               ? entry.key.substring(3)
                                               : entry.key;
                                       _keyController.text = shortKey;
-                                      _valueController.text =
-                                          entry.value.value;
+                                      _valueController.text = entry.value.value;
                                     },
                                     tooltip: 'Copy to form',
                                   ),
@@ -723,8 +722,7 @@ class _KvStorePageState extends State<KvStorePage> {
                                   fontWeight: FontWeight.bold, fontSize: 14)),
                           const Spacer(),
                           TextButton(
-                            onPressed: () =>
-                                setState(() => _changeLog.clear()),
+                            onPressed: () => setState(() => _changeLog.clear()),
                             child: const Text('Clear'),
                           ),
                         ],
@@ -755,11 +753,9 @@ class _KvStorePageState extends State<KvStorePage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: isDelete
-                                          ? Colors.red
-                                          : Colors.green,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                      color:
+                                          isDelete ? Colors.red : Colors.green,
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       isDelete ? 'DEL' : 'PUT',
@@ -778,16 +774,14 @@ class _KvStorePageState extends State<KvStorePage> {
                                         ? 'Key deleted'
                                         : event.value ?? '',
                                     style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[600]),
+                                        fontSize: 11, color: Colors.grey[600]),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   trailing: Text(
                                     _formatTime(event.timestamp),
                                     style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey[500]),
+                                        fontSize: 10, color: Colors.grey[500]),
                                   ),
                                 );
                               },
@@ -812,8 +806,7 @@ class _KvStorePageState extends State<KvStorePage> {
     );
   }
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:'
+  String _formatTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:'
       '${dt.minute.toString().padLeft(2, '0')}:'
       '${dt.second.toString().padLeft(2, '0')}';
 

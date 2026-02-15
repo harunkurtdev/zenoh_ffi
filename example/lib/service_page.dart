@@ -35,10 +35,8 @@ class _ServicePageState extends State<ServicePage> {
 
   // Client side
   String _selectedOp = 'add';
-  final TextEditingController _aController =
-      TextEditingController(text: '10');
-  final TextEditingController _bController =
-      TextEditingController(text: '5');
+  final TextEditingController _aController = TextEditingController(text: '10');
+  final TextEditingController _bController = TextEditingController(text: '5');
   final TextEditingController _echoController =
       TextEditingController(text: 'Hello Zenoh!');
   double _timeout = 5;
@@ -62,11 +60,10 @@ class _ServicePageState extends State<ServicePage> {
       _session = await ZenohSession.open(
         mode: 'peer',
         endpoints: [
-
           'tcp/localhost:7447',
           'tcp/127.0.0.1:7447',
-        'tcp/10.81.29.92:7447',
-        'tcp/10.0.0.2:7447', // android emulator localhost
+          'tcp/10.81.29.92:7447',
+          'tcp/10.0.0.2:7447', // android emulator localhost
         ],
       );
 
@@ -164,8 +161,7 @@ class _ServicePageState extends State<ServicePage> {
           result = a / b;
           break;
         default:
-          query.replyJson(
-              'service/calc', {'error': 'Unknown operation: $op'});
+          query.replyJson('service/calc', {'error': 'Unknown operation: $op'});
           _incrementQueries();
           return;
       }
@@ -239,8 +235,7 @@ class _ServicePageState extends State<ServicePage> {
 
     final a = double.tryParse(_aController.text) ?? 0;
     final b = double.tryParse(_bController.text) ?? 0;
-    final selector =
-        'service/calc?op=$_selectedOp&a=$a&b=$b';
+    final selector = 'service/calc?op=$_selectedOp&a=$a&b=$b';
 
     final stopwatch = Stopwatch()..start();
 
@@ -258,8 +253,8 @@ class _ServicePageState extends State<ServicePage> {
             options: ZenohGetOptions(
               timeout: Duration(seconds: _timeout.toInt()),
               encoding: ZenohEncoding.applicationJson,
-              attachment:
-                  Uint8List.fromList(utf8.encode('client=flutter-service-page')),
+              attachment: Uint8List.fromList(
+                  utf8.encode('client=flutter-service-page')),
             ),
           ),
         );
@@ -434,7 +429,8 @@ class _ServicePageState extends State<ServicePage> {
                           const SizedBox(height: 16),
                           const Text(
                             'Connection Failed',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -459,7 +455,8 @@ class _ServicePageState extends State<ServicePage> {
                                 SizedBox(height: 4),
                                 SelectableText(
                                   'zenohd -l tcp/0.0.0.0:7447',
-                                  style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                                  style: TextStyle(
+                                      fontFamily: 'monospace', fontSize: 13),
                                 ),
                               ],
                             ),
@@ -514,8 +511,7 @@ class _ServicePageState extends State<ServicePage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color:
-                          _serviceRunning ? Colors.green : Colors.grey[700],
+                      color: _serviceRunning ? Colors.green : Colors.grey[700],
                     ),
                   ),
                   if (_serviceRunning)
@@ -523,11 +519,8 @@ class _ServicePageState extends State<ServicePage> {
                         style: TextStyle(color: Colors.grey[600])),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
-                    onPressed:
-                        _serviceRunning ? _stopService : _startService,
-                    icon: Icon(_serviceRunning
-                        ? Icons.stop
-                        : Icons.play_arrow),
+                    onPressed: _serviceRunning ? _stopService : _startService,
+                    icon: Icon(_serviceRunning ? Icons.stop : Icons.play_arrow),
                     label: Text(
                         _serviceRunning ? 'Stop Service' : 'Start Service'),
                     style: ElevatedButton.styleFrom(
@@ -695,8 +688,7 @@ class _ServicePageState extends State<ServicePage> {
                             ),
                           ),
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(_selectedOp == 'add'
                                 ? '+'
                                 : _selectedOp == 'subtract'
@@ -739,8 +731,7 @@ class _ServicePageState extends State<ServicePage> {
                                 max: 30,
                                 divisions: 29,
                                 label: '${_timeout.toInt()}s',
-                                onChanged: (v) =>
-                                    setState(() => _timeout = v),
+                                onChanged: (v) => setState(() => _timeout = v),
                               ),
                             ),
                             Text('${_timeout.toInt()}s'),
@@ -753,8 +744,7 @@ class _ServicePageState extends State<ServicePage> {
                           value: _useRetry,
                           dense: true,
                           contentPadding: EdgeInsets.zero,
-                          onChanged: (v) =>
-                              setState(() => _useRetry = v),
+                          onChanged: (v) => setState(() => _useRetry = v),
                         ),
                       ],
                     ),
@@ -771,9 +761,7 @@ class _ServicePageState extends State<ServicePage> {
                       ? _sendEchoRequest
                       : _sendCalcRequest,
                   icon: const Icon(Icons.send),
-                  label: Text(_useRetry
-                      ? 'Send with Retry'
-                      : 'Send Request'),
+                  label: Text(_useRetry ? 'Send with Retry' : 'Send Request'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.blue,
@@ -842,8 +830,7 @@ class _ServicePageState extends State<ServicePage> {
                                 Text(
                                   '${log.duration.inMilliseconds}ms',
                                   style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey[600]),
+                                      fontSize: 10, color: Colors.grey[600]),
                                 ),
                                 if (log.usedRetry) ...[
                                   const SizedBox(width: 4),
@@ -852,13 +839,11 @@ class _ServicePageState extends State<ServicePage> {
                                         horizontal: 4, vertical: 1),
                                     decoration: BoxDecoration(
                                       color: Colors.orange.withOpacity(0.2),
-                                      borderRadius:
-                                          BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text('RETRY',
                                         style: TextStyle(
-                                            fontSize: 9,
-                                            color: Colors.orange)),
+                                            fontSize: 9, color: Colors.orange)),
                                   ),
                                 ],
                               ],

@@ -268,11 +268,13 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.cloud_off, color: Colors.red, size: 48),
+                        const Icon(Icons.cloud_off,
+                            color: Colors.red, size: 48),
                         const SizedBox(height: 16),
                         const Text(
                           'Connection Failed',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -297,7 +299,8 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                               SizedBox(height: 4),
                               SelectableText(
                                 'zenohd -l tcp/0.0.0.0:7447',
-                                style: TextStyle(fontFamily: 'monospace', fontSize: 13),
+                                style: TextStyle(
+                                    fontFamily: 'monospace', fontSize: 13),
                               ),
                             ],
                           ),
@@ -414,8 +417,7 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                                   fontWeight: FontWeight.bold, fontSize: 14)),
                           const Spacer(),
                           TextButton(
-                            onPressed: () =>
-                                setState(() => _messages.clear()),
+                            onPressed: () => setState(() => _messages.clear()),
                             child: const Text('Clear'),
                           ),
                         ],
@@ -436,18 +438,15 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                                 final isDelete =
                                     msg.kind == ZenohSampleKind.delete;
                                 return Card(
-                                  color: isDelete
-                                      ? Colors.red[50]
-                                      : null,
+                                  color: isDelete ? Colors.red[50] : null,
                                   child: ListTile(
                                     dense: true,
                                     leading: Icon(
                                       isDelete
                                           ? Icons.delete
                                           : Icons.arrow_downward,
-                                      color: isDelete
-                                          ? Colors.red
-                                          : Colors.green,
+                                      color:
+                                          isDelete ? Colors.red : Colors.green,
                                       size: 20,
                                     ),
                                     title: Text(msg.key,
@@ -459,9 +458,7 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          isDelete
-                                              ? '[DELETED]'
-                                              : msg.payload,
+                                          isDelete ? '[DELETED]' : msg.payload,
                                           style: const TextStyle(
                                               fontFamily: 'monospace',
                                               fontSize: 11),
@@ -477,12 +474,10 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                                                   _priorityColor(
                                                       msg.priority!)),
                                             if (msg.encoding != null)
-                                              _qosBadge(
-                                                  msg.encoding!.mimeType,
+                                              _qosBadge(msg.encoding!.mimeType,
                                                   Colors.purple),
                                             if (msg.attachment != null)
-                                              _qosBadge(
-                                                  'meta', Colors.teal),
+                                              _qosBadge('meta', Colors.teal),
                                           ],
                                         ),
                                       ],
@@ -565,7 +560,9 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                     ),
                     items: ZenohPriority.values
                         .map((p) => DropdownMenuItem(
-                            value: p, child: Text(p.name, style: const TextStyle(fontSize: 12))))
+                            value: p,
+                            child: Text(p.name,
+                                style: const TextStyle(fontSize: 12))))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) onPriorityChanged(v);
@@ -584,7 +581,9 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                     ),
                     items: ZenohCongestionControl.values
                         .map((c) => DropdownMenuItem(
-                            value: c, child: Text(c.name, style: const TextStyle(fontSize: 12))))
+                            value: c,
+                            child: Text(c.name,
+                                style: const TextStyle(fontSize: 12))))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) onCongestionChanged(v);
@@ -597,8 +596,8 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
             if (express != null && onExpressChanged != null) ...[
               const SizedBox(height: 4),
               SwitchListTile(
-                title: const Text('Express Mode',
-                    style: TextStyle(fontSize: 13)),
+                title:
+                    const Text('Express Mode', style: TextStyle(fontSize: 13)),
                 subtitle: const Text('Skip congestion control',
                     style: TextStyle(fontSize: 11)),
                 value: express,
@@ -628,8 +627,8 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline,
                       size: 18, color: Colors.red),
-                  label: const Text('Delete',
-                      style: TextStyle(color: Colors.red)),
+                  label:
+                      const Text('Delete', style: TextStyle(color: Colors.red)),
                 ),
               ],
             ),
@@ -668,23 +667,19 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                 ButtonSegment(value: 'offline', label: Text('Offline')),
               ],
               selected: {_statusText},
-              onSelectionChanged: (v) =>
-                  setState(() => _statusText = v.first),
+              onSelectionChanged: (v) => setState(() => _statusText = v.first),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
                 Text('Priority: ${_statusPriority.name}',
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 const SizedBox(width: 8),
                 Text('Congestion: ${_statusCongestion.name}',
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                 const SizedBox(width: 8),
                 Text('Encoding: textPlain',
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey[600])),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
             const SizedBox(height: 8),
@@ -706,8 +701,8 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
                   onPressed: () => _deleteSensorKey('status'),
                   icon: const Icon(Icons.delete_outline,
                       size: 18, color: Colors.red),
-                  label: const Text('Delete',
-                      style: TextStyle(color: Colors.red)),
+                  label:
+                      const Text('Delete', style: TextStyle(color: Colors.red)),
                 ),
               ],
             ),
@@ -727,7 +722,8 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
         border: Border.all(color: color.withOpacity(0.4)),
       ),
       child: Text(label,
-          style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600)),
+          style: TextStyle(
+              fontSize: 9, color: color, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -750,8 +746,7 @@ class _SensorDashboardPageState extends State<SensorDashboardPage> {
     }
   }
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:'
+  String _formatTime(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:'
       '${dt.minute.toString().padLeft(2, '0')}:'
       '${dt.second.toString().padLeft(2, '0')}';
 
