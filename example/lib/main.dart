@@ -13,6 +13,11 @@ import 'router_mesh_page.dart';
 import 'resilient_stream_page.dart';
 import 'wildcard_explorer_page.dart';
 import 'query_payload_page.dart';
+import 'chat_presence_page.dart';
+import 'robot_teleop_page.dart';
+import 'agriculture_monitor_page.dart';
+import 'benchmark_page.dart';
+import 'topology_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -179,6 +184,55 @@ class HomePage extends StatelessWidget {
             Colors.pink,
             const QueryPayloadPage(),
           ),
+          const SizedBox(height: 24),
+
+          // --- Showcase Examples ---
+          _buildSectionHeader('Showcase Examples'),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Chat & Presence',
+            'Liveliness + pub/sub + queryable, animated chat UI',
+            Icons.chat_bubble,
+            Colors.indigo,
+            const ChatPresencePage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Robot Teleoperation',
+            'Joystick, gauges, multi-QoS publishers, dark cockpit UI',
+            Icons.smart_toy,
+            Colors.blueGrey,
+            const RobotTeleopPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Agriculture Monitor',
+            'Heatmap, sparklines, CSV/YAML encodings, 7 priorities',
+            Icons.agriculture,
+            Colors.green,
+            const AgricultureMonitorPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Benchmark Dashboard',
+            'Throughput & latency charts, QoS permutation matrix',
+            Icons.speed,
+            Colors.deepOrange,
+            const BenchmarkPage(),
+          ),
+          const SizedBox(height: 8),
+          _buildNavButton(
+            context,
+            'Topology Visualizer',
+            'Interactive graph, scout, multi-session, config builder',
+            Icons.hub,
+            Colors.teal,
+            const TopologyPage(),
+          ),
           const SizedBox(height: 16),
         ],
       ),
@@ -205,7 +259,7 @@ class HomePage extends StatelessWidget {
       elevation: 2,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withAlpha(38),
           child: Icon(icon, color: color),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
